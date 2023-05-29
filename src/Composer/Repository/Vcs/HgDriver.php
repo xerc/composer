@@ -110,7 +110,7 @@ class HgDriver extends VcsDriver
      */
     public function getSource(string $identifier): array
     {
-        return array('type' => 'hg', 'url' => $this->getUrl(), 'reference' => $identifier);
+        return ['type' => 'hg', 'url' => $this->getUrl(), 'reference' => $identifier];
     }
 
     /**
@@ -163,11 +163,11 @@ class HgDriver extends VcsDriver
     public function getTags(): array
     {
         if (null === $this->tags) {
-            $tags = array();
+            $tags = [];
 
             $this->process->execute('hg tags', $output, $this->repoDir);
             foreach ($this->process->splitLines($output) as $tag) {
-                if ($tag && Preg::isMatch('(^([^\s]+)\s+\d+:(.*)$)', $tag, $match)) {
+                if ($tag && Preg::isMatchStrictGroups('(^([^\s]+)\s+\d+:(.*)$)', $tag, $match)) {
                     $tags[$match[1]] = $match[2];
                 }
             }
@@ -185,19 +185,19 @@ class HgDriver extends VcsDriver
     public function getBranches(): array
     {
         if (null === $this->branches) {
-            $branches = array();
-            $bookmarks = array();
+            $branches = [];
+            $bookmarks = [];
 
             $this->process->execute('hg branches', $output, $this->repoDir);
             foreach ($this->process->splitLines($output) as $branch) {
-                if ($branch && Preg::isMatch('(^([^\s]+)\s+\d+:([a-f0-9]+))', $branch, $match) && $match[1][0] !== '-') {
+                if ($branch && Preg::isMatchStrictGroups('(^([^\s]+)\s+\d+:([a-f0-9]+))', $branch, $match) && $match[1][0] !== '-') {
                     $branches[$match[1]] = $match[2];
                 }
             }
 
             $this->process->execute('hg bookmarks', $output, $this->repoDir);
             foreach ($this->process->splitLines($output) as $branch) {
-                if ($branch && Preg::isMatch('(^(?:[\s*]*)([^\s]+)\s+\d+:(.*)$)', $branch, $match) && $match[1][0] !== '-') {
+                if ($branch && Preg::isMatchStrictGroups('(^(?:[\s*]*)([^\s]+)\s+\d+:(.*)$)', $branch, $match) && $match[1][0] !== '-') {
                     $bookmarks[$match[1]] = $match[2];
                 }
             }

@@ -19,50 +19,43 @@ class RequestProxyTest extends TestCase
 {
     /**
      * @dataProvider dataSecure
-     *
-     * @param string $url
-     * @param bool   $expectedSecure
      */
     public function testIsSecure(string $url, bool $expectedSecure): void
     {
-        $proxy = new RequestProxy($url, array(), '');
+        $proxy = new RequestProxy($url, [], '');
 
         $this->assertSame($expectedSecure, $proxy->isSecure());
     }
 
-    public function dataSecure(): array
+    public static function dataSecure(): array
     {
         // url, secure
-        return array(
-            'basic' => array('http://proxy.com:80', false),
-            'secure' => array('https://proxy.com:443', true),
-            'none' => array('', false),
-        );
+        return [
+            'basic' => ['http://proxy.com:80', false],
+            'secure' => ['https://proxy.com:443', true],
+            'none' => ['', false],
+        ];
     }
 
     /**
      * @dataProvider dataProxyUrl
-     *
-     * @param string $url
-     * @param string $format
-     * @param string $expected
      */
     public function testGetFormattedUrlFormat(string $url, string $format, string $expected): void
     {
-        $proxy = new RequestProxy($url, array(), $url);
+        $proxy = new RequestProxy($url, [], $url);
 
         $message = $proxy->getFormattedUrl($format);
         $this->assertSame($expected, $message);
     }
 
-    public function dataProxyUrl(): array
+    public static function dataProxyUrl(): array
     {
         $format = 'proxy (%s)';
 
         // url, format, expected
-        return array(
-            array('', $format, ''),
-            array('http://proxy.com:80', $format, 'proxy (http://proxy.com:80)'),
-        );
+        return [
+            ['', $format, ''],
+            ['http://proxy.com:80', $format, 'proxy (http://proxy.com:80)'],
+        ];
     }
 }

@@ -40,6 +40,48 @@ class RequireCommandTest extends TestCase
         $appTester->run(['command' => 'require', '--dry-run' => true, '--no-audit' => true, 'packages' => ['required/pkg']]);
     }
 
+    public function testRequireWarnsIfResolvedToFeatureBranch(): void
+    {
+        $this->initTempComposer([
+            'repositories' => [
+                'packages' => [
+                    'type' => 'package',
+                    'package' => [
+                        ['name' => 'required/pkg', 'version' => '2.0.0', 'require' => ['common/dep' => '^1']],
+                        ['name' => 'required/pkg', 'version' => 'dev-foo-bar', 'require' => ['common/dep' => '^2']],
+                        ['name' => 'common/dep', 'version' => '2.0.0'],
+                    ],
+                ],
+            ],
+            'require' => [
+                'common/dep' => '^2.0',
+            ],
+            'minimum-stability' => 'dev',
+            'prefer-stable' => true,
+        ]);
+
+        $appTester = $this->getApplicationTester();
+        $appTester->setInputs(['n']);
+        $appTester->run(['command' => 'require', '--dry-run' => true, '--no-audit' => true, 'packages' => ['required/pkg']], ['interactive' => true]);
+        self::assertSame(
+'./composer.json has been updated
+Running composer update required/pkg
+Loading composer repositories with package information
+Updating dependencies
+Lock file operations: 2 installs, 0 updates, 0 removals
+  - Locking common/dep (2.0.0)
+  - Locking required/pkg (dev-foo-bar)
+Installing dependencies from lock file (including require-dev)
+Package operations: 2 installs, 0 updates, 0 removals
+  - Installing common/dep (2.0.0)
+  - Installing required/pkg (dev-foo-bar)
+Using version dev-foo-bar for required/pkg
+<warning>Version dev-foo-bar looks like it may be a feature branch which is unlikely to keep working in the long run and may be in an unstable state</warning>
+Are you sure you want to use this constraint (Y) or would you rather abort (n) the whole operation [Y,n]? '.'
+Installation failed, reverting ./composer.json to its original content.
+', $appTester->getDisplay(true));
+    }
+
     /**
      * @dataProvider provideRequire
      * @param array<mixed> $composerJson
@@ -58,14 +100,9 @@ class RequireCommandTest extends TestCase
         } else {
             $this->assertSame(trim($expected), trim($appTester->getDisplay(true)));
         }
-
-        // workaround until https://github.com/symfony/symfony/pull/46747 is merged
-        putenv('SHELL_VERBOSITY');
-        unset($_ENV['SHELL_VERBOSITY']);
-        unset($_SERVER['SHELL_VERBOSITY']);
     }
 
-    public function provideRequire(): \Generator
+    public static function provideRequire(): \Generator
     {
         yield 'warn once for missing ext but a lower package matches' => [
             [
@@ -83,7 +120,6 @@ class RequireCommandTest extends TestCase
             ['packages' => ['required/pkg']],
             <<<OUTPUT
 <warning>Cannot use required/pkg's latest version 1.2.0 as it requires ext-foobar ^1 which is missing from your platform.
-Using version ^1.0 for required/pkg
 ./composer.json has been updated
 Running composer update required/pkg
 Loading composer repositories with package information
@@ -93,6 +129,7 @@ Lock file operations: 1 install, 0 updates, 0 removals
 Installing dependencies from lock file (including require-dev)
 Package operations: 1 install, 0 updates, 0 removals
   - Installing required/pkg (1.0.0)
+Using version ^1.0 for required/pkg
 OUTPUT
         ];
 
@@ -113,7 +150,6 @@ OUTPUT
             <<<OUTPUT
 <warning>Cannot use required/pkg's latest version 1.2.0 as it requires ext-foobar ^1 which is missing from your platform.
 <warning>Cannot use required/pkg 1.1.0 as it requires ext-foobar ^1 which is missing from your platform.
-Using version ^1.0 for required/pkg
 ./composer.json has been updated
 Running composer update required/pkg
 Loading composer repositories with package information
@@ -124,6 +160,7 @@ Analyzed %d rules to resolve dependencies
 Lock file operations: 1 install, 0 updates, 0 removals
 Installs: required/pkg:1.0.0
   - Locking required/pkg (1.0.0)
+Using version ^1.0 for required/pkg
 OUTPUT
         ];
 
@@ -142,13 +179,87 @@ OUTPUT
             ['packages' => ['required/pkg'], '--no-install' => true],
             <<<OUTPUT
 <warning>Cannot use required/pkg's latest version 1.1.0 as it requires php ^20 which is not satisfied by your platform.
-Using version ^1.0 for required/pkg
 ./composer.json has been updated
 Running composer update required/pkg
 Loading composer repositories with package information
 Updating dependencies
 Lock file operations: 1 install, 0 updates, 0 removals
   - Locking required/pkg (1.0.0)
+Using version ^1.0 for required/pkg
+OUTPUT
+        ];
+
+        yield 'version selection happens early even if not completely accurate if no update is requested' => [
+            [
+                'repositories' => [
+                    'packages' => [
+                        'type' => 'package',
+                        'package' => [
+                            ['name' => 'required/pkg', 'version' => '1.1.0', 'require' => ['php' => '^20']],
+                            ['name' => 'required/pkg', 'version' => '1.0.0', 'require' => ['php' => '>=7']],
+                        ],
+                    ],
+                ],
+            ],
+            ['packages' => ['required/pkg'], '--no-update' => true],
+            <<<OUTPUT
+<warning>Cannot use required/pkg's latest version 1.1.0 as it requires php ^20 which is not satisfied by your platform.
+Using version ^1.0 for required/pkg
+./composer.json has been updated
+OUTPUT
+        ];
+
+        yield 'pick best matching version when not provided' => [
+            [
+                'repositories' => [
+                    'packages' => [
+                        'type' => 'package',
+                        'package' => [
+                            ['name' => 'existing/dep', 'version' => '1.1.0', 'require' => ['required/pkg' => '^1']],
+                            ['name' => 'required/pkg', 'version' => '2.0.0'],
+                            ['name' => 'required/pkg', 'version' => '1.1.0'],
+                            ['name' => 'required/pkg', 'version' => '1.0.0'],
+                        ],
+                    ],
+                ],
+                'require' => [
+                    'existing/dep' => '^1'
+                ],
+            ],
+            ['packages' => ['required/pkg'], '--no-install' => true],
+            <<<OUTPUT
+./composer.json has been updated
+Running composer update required/pkg
+Loading composer repositories with package information
+Updating dependencies
+Lock file operations: 2 installs, 0 updates, 0 removals
+  - Locking existing/dep (1.1.0)
+  - Locking required/pkg (1.1.0)
+Using version ^1.1 for required/pkg
+OUTPUT
+        ];
+
+        yield 'use exact constraint with --fixed' => [
+            [
+                'type' => 'project',
+                'repositories' => [
+                    'packages' => [
+                        'type' => 'package',
+                        'package' => [
+                            ['name' => 'required/pkg', 'version' => '1.1.0'],
+                        ],
+                    ],
+                ],
+            ],
+            ['packages' => ['required/pkg'], '--no-install' => true, '--fixed' => true],
+            <<<OUTPUT
+./composer.json has been updated
+Running composer update required/pkg
+Loading composer repositories with package information
+Updating dependencies
+Lock file operations: 1 install, 0 updates, 0 removals
+  - Locking required/pkg (1.1.0)
+Using version 1.1.0 for required/pkg
 OUTPUT
         ];
     }

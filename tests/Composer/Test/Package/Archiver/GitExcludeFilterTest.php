@@ -20,7 +20,6 @@ class GitExcludeFilterTest extends TestCase
     /**
      * @dataProvider providePatterns
      *
-     * @param string  $ignore
      * @param mixed[] $expected
      */
     public function testPatternEscape(string $ignore, array $expected): void
@@ -30,11 +29,11 @@ class GitExcludeFilterTest extends TestCase
         $this->assertEquals($expected, $filter->parseGitAttributesLine($ignore));
     }
 
-    public function providePatterns(): array
+    public static function providePatterns(): array
     {
-        return array(
-            array('app/config/parameters.yml export-ignore', array('{(?=[^\.])app/(?=[^\.])config/(?=[^\.])parameters\.yml(?=$|/)}', false, false)),
-            array('app/config/parameters.yml -export-ignore', array('{(?=[^\.])app/(?=[^\.])config/(?=[^\.])parameters\.yml(?=$|/)}', true, false)),
-        );
+        return [
+            ['app/config/parameters.yml export-ignore', ['{(?=[^\.])app/(?=[^\.])config/(?=[^\.])parameters\.yml(?=$|/)}', false, false]],
+            ['app/config/parameters.yml -export-ignore', ['{(?=[^\.])app/(?=[^\.])config/(?=[^\.])parameters\.yml(?=$|/)}', true, false]],
+        ];
     }
 }

@@ -19,8 +19,6 @@ final class IgnoreNothingPlatformRequirementFilterTest extends TestCase
 {
     /**
      * @dataProvider dataIsIgnored
-     *
-     * @param string $req
      */
     public function testIsIgnored(string $req): void
     {
@@ -32,11 +30,11 @@ final class IgnoreNothingPlatformRequirementFilterTest extends TestCase
     /**
      * @return array<string, mixed[]>
      */
-    public function dataIsIgnored(): array
+    public static function dataIsIgnored(): array
     {
-        return array(
-            'php is not ignored' => array('php'),
-            'monolog/monolog is not ignored' => array('monolog/monolog'),
-        );
+        return [
+            'php is not ignored' => ['php'],
+            'monolog/monolog is not ignored' => ['monolog/monolog'],
+        ];
     }
 }

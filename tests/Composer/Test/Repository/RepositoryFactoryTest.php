@@ -30,7 +30,7 @@ class RepositoryFactoryTest extends TestCase
         $ref->setAccessible(true);
         $repositoryClasses = $ref->getValue($manager);
 
-        $this->assertEquals(array(
+        $this->assertEquals([
             'composer',
             'vcs',
             'package',
@@ -46,7 +46,7 @@ class RepositoryFactoryTest extends TestCase
             'hg',
             'artifact',
             'path',
-        ), array_keys($repositoryClasses));
+        ], array_keys($repositoryClasses));
     }
 
     /**
@@ -63,15 +63,15 @@ class RepositoryFactoryTest extends TestCase
         $this->assertSame($expected, RepositoryFactory::generateRepositoryName($index, $config, $existingRepos));
     }
 
-    public function generateRepositoryNameProvider(): array
+    public static function generateRepositoryNameProvider(): array
     {
-        return array(
-            array(0, array(), array(), '0'),
-            array(0, array(), array(array()), '02'),
-            array(0, array('url' => 'https://example.org'), array(), 'example.org'),
-            array(0, array('url' => 'https://example.org'), array('example.org' => array()), 'example.org2'),
-            array('example.org', array('url' => 'https://example.org/repository'), array(), 'example.org'),
-            array('example.org', array('url' => 'https://example.org/repository'), array('example.org' => array()), 'example.org2'),
-        );
+        return [
+            [0, [], [], '0'],
+            [0, [], [[]], '02'],
+            [0, ['url' => 'https://example.org'], [], 'example.org'],
+            [0, ['url' => 'https://example.org'], ['example.org' => []], 'example.org2'],
+            ['example.org', ['url' => 'https://example.org/repository'], [], 'example.org'],
+            ['example.org', ['url' => 'https://example.org/repository'], ['example.org' => []], 'example.org2'],
+        ];
     }
 }

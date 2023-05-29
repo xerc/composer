@@ -78,12 +78,12 @@ class InstallerTest extends TestCase
         $io = new BufferIO('', OutputInterface::VERBOSITY_NORMAL, new OutputFormatter(false));
 
         $downloadManager = $this->getMockBuilder('Composer\Downloader\DownloadManager')
-            ->setConstructorArgs(array($io))
+            ->setConstructorArgs([$io])
             ->getMock();
         $config = $this->getMockBuilder('Composer\Config')->getMock();
         $config->expects($this->any())
             ->method('get')
-            ->will($this->returnCallback(function ($key) {
+            ->will($this->returnCallback(static function ($key) {
                 switch ($key) {
                     case 'vendor-dir':
                         return 'foo';
@@ -91,7 +91,7 @@ class InstallerTest extends TestCase
                     case 'notify-on-install':
                         return true;
                     case 'platform':
-                        return array();
+                        return [];
                 }
 
                 throw new \UnexpectedValueException('Unknown key '.$key);
@@ -102,9 +102,6 @@ class InstallerTest extends TestCase
         $repositoryManager = new RepositoryManager($io, $config, $httpDownloader, $eventDispatcher);
         $repositoryManager->setLocalRepository(new InstalledArrayRepository());
 
-        if (!is_array($repositories)) {
-            $repositories = array($repositories);
-        }
         foreach ($repositories as $repository) {
             $repositoryManager->addRepository($repository);
         }
@@ -116,17 +113,17 @@ class InstallerTest extends TestCase
         $lockJsonMock = $this->getMockBuilder('Composer\Json\JsonFile')->disableOriginalConstructor()->getMock();
         $lockJsonMock->expects($this->any())
             ->method('read')
-            ->will($this->returnCallback(function () use (&$lockData) {
+            ->will($this->returnCallback(static function () use (&$lockData) {
                 return json_decode($lockData, true);
             }));
         $lockJsonMock->expects($this->any())
             ->method('exists')
-            ->will($this->returnCallback(function () use (&$lockData): bool {
+            ->will($this->returnCallback(static function () use (&$lockData): bool {
                 return $lockData !== null;
             }));
         $lockJsonMock->expects($this->any())
             ->method('write')
-            ->will($this->returnCallback(function ($value, $options = 0) use (&$lockData): void {
+            ->will($this->returnCallback(static function ($value, $options = 0) use (&$lockData): void {
                 $lockData = json_encode($value, JSON_PRETTY_PRINT);
             }));
 
@@ -142,9 +139,9 @@ class InstallerTest extends TestCase
         $output = str_replace("\r", '', $io->getOutput());
         $this->assertEquals(0, $result, $output);
 
-        $expectedInstalled = $options['install'] ?? array();
-        $expectedUpdated = $options['update'] ?? array();
-        $expectedUninstalled = $options['uninstall'] ?? array();
+        $expectedInstalled = $options['install'] ?? [];
+        $expectedUpdated = $options['update'] ?? [];
+        $expectedUninstalled = $options['uninstall'] ?? [];
 
         $installed = $installationManager->getInstalledPackages();
         $this->assertEquals($this->makePackagesComparable($expectedInstalled), $this->makePackagesComparable($installed));
@@ -164,7 +161,7 @@ class InstallerTest extends TestCase
     {
         $dumper = new ArrayDumper();
 
-        $comparable = array();
+        $comparable = [];
         foreach ($packages as $package) {
             $comparable[] = $dumper->dump($package);
         }
@@ -172,49 +169,49 @@ class InstallerTest extends TestCase
         return $comparable;
     }
 
-    public function provideInstaller(): array
+    public static function provideInstaller(): array
     {
-        $cases = array();
+        $cases = [];
 
         // when A requires B and B requires A, and A is a non-published root package
         // the install of B should succeed
 
-        $a = $this->getPackage('A', '1.0.0', 'Composer\Package\RootPackage');
-        $a->setRequires(array(
-            'b' => new Link('A', 'B', $v = $this->getVersionConstraint('=', '1.0.0'), Link::TYPE_REQUIRE, $v->getPrettyString()),
-        ));
-        $b = $this->getPackage('B', '1.0.0');
-        $b->setRequires(array(
-            'a' => new Link('B', 'A', $v = $this->getVersionConstraint('=', '1.0.0'), Link::TYPE_REQUIRE, $v->getPrettyString()),
-        ));
+        $a = self::getPackage('A', '1.0.0', 'Composer\Package\RootPackage');
+        $a->setRequires([
+            'b' => new Link('A', 'B', $v = self::getVersionConstraint('=', '1.0.0'), Link::TYPE_REQUIRE, $v->getPrettyString()),
+        ]);
+        $b = self::getPackage('B', '1.0.0');
+        $b->setRequires([
+            'a' => new Link('B', 'A', $v = self::getVersionConstraint('=', '1.0.0'), Link::TYPE_REQUIRE, $v->getPrettyString()),
+        ]);
 
-        $cases[] = array(
+        $cases[] = [
             $a,
-            [new ArrayRepository(array($b))],
-            array(
-                'install' => array($b),
-            ),
-        );
+            [new ArrayRepository([$b])],
+            [
+                'install' => [$b],
+            ],
+        ];
 
         // #480: when A requires B and B requires A, and A is a published root package
         // only B should be installed, as A is the root
 
-        $a = $this->getPackage('A', '1.0.0', 'Composer\Package\RootPackage');
-        $a->setRequires(array(
-            'b' => new Link('A', 'B', $v = $this->getVersionConstraint('=', '1.0.0'), Link::TYPE_REQUIRE, $v->getPrettyString()),
-        ));
-        $b = $this->getPackage('B', '1.0.0');
-        $b->setRequires(array(
-            'a' => new Link('B', 'A', $v = $this->getVersionConstraint('=', '1.0.0'), Link::TYPE_REQUIRE, $v->getPrettyString()),
-        ));
+        $a = self::getPackage('A', '1.0.0', 'Composer\Package\RootPackage');
+        $a->setRequires([
+            'b' => new Link('A', 'B', $v = self::getVersionConstraint('=', '1.0.0'), Link::TYPE_REQUIRE, $v->getPrettyString()),
+        ]);
+        $b = self::getPackage('B', '1.0.0');
+        $b->setRequires([
+            'a' => new Link('B', 'A', $v = self::getVersionConstraint('=', '1.0.0'), Link::TYPE_REQUIRE, $v->getPrettyString()),
+        ]);
 
-        $cases[] = array(
+        $cases[] = [
             $a,
-            [new ArrayRepository(array($a, $b))],
-            array(
-                'install' => array($b),
-            ),
-        );
+            [new ArrayRepository([$a, $b])],
+            [
+                'install' => [$b],
+            ],
+        ];
 
         // TODO why are there not more cases with uninstall/update?
         return $cases;
@@ -223,18 +220,11 @@ class InstallerTest extends TestCase
     /**
      * @group slow
      * @dataProvider provideSlowIntegrationTests
-     * @param string $file
-     * @param string $message
-     * @param null|string $condition
      * @param mixed[] $composerConfig
      * @param ?array<mixed> $lock
      * @param ?array<mixed> $installed
-     * @param string $run
      * @param mixed[]|false $expectLock
      * @param ?array<mixed> $expectInstalled
-     * @param null|string $expectOutput
-     * @param null|string $expectOutputOptimized
-     * @param string $expect
      * @param int|class-string<\Throwable> $expectResult
      */
     public function testSlowIntegration(string $file, string $message, ?string $condition, array $composerConfig, ?array $lock, ?array $installed, string $run, $expectLock, ?array $expectInstalled, ?string $expectOutput, ?string $expectOutputOptimized, string $expect, $expectResult): void
@@ -246,18 +236,11 @@ class InstallerTest extends TestCase
 
     /**
      * @dataProvider provideIntegrationTests
-     * @param string $file
-     * @param string $message
-     * @param null|string $condition
      * @param mixed[] $composerConfig
      * @param ?array<mixed> $lock
      * @param ?array<mixed> $installed
-     * @param string $run
      * @param mixed[]|false $expectLock
      * @param ?array<mixed> $expectInstalled
-     * @param null|string $expectOutput
-     * @param null|string $expectOutputOptimized
-     * @param string $expect
      * @param int|class-string<\Throwable> $expectResult
      */
     public function testIntegrationWithPoolOptimizer(string $file, string $message, ?string $condition, array $composerConfig, ?array $lock, ?array $installed, string $run, $expectLock, ?array $expectInstalled, ?string $expectOutput, ?string $expectOutputOptimized, string $expect, $expectResult): void
@@ -269,18 +252,11 @@ class InstallerTest extends TestCase
 
     /**
      * @dataProvider provideIntegrationTests
-     * @param string $file
-     * @param string $message
-     * @param null|string $condition
      * @param mixed[] $composerConfig
      * @param ?array<mixed> $lock
      * @param ?array<mixed> $installed
-     * @param string $run
      * @param mixed[]|false $expectLock
      * @param ?array<mixed> $expectInstalled
-     * @param null|string $expectOutput
-     * @param null|string $expectOutputOptimized
-     * @param string $expect
      * @param int|class-string<\Throwable> $expectResult
      */
     public function testIntegrationWithRawPool(string $file, string $message, ?string $condition, array $composerConfig, ?array $lock, ?array $installed, string $run, $expectLock, ?array $expectInstalled, ?string $expectOutput, ?string $expectOutputOptimized, string $expect, $expectResult): void
@@ -291,19 +267,12 @@ class InstallerTest extends TestCase
     }
 
     /**
-     * @param string $file
-     * @param string $message
-     * @param null|string $condition
      * @param mixed[] $composerConfig
      * @param ?array<mixed> $lock
      * @param ?array<mixed> $installed
-     * @param string $run
      * @param mixed[]|false $expectLock
      * @param ?array<mixed> $expectInstalled
-     * @param null|string $expectOutput
-     * @param string $expect
      * @param int|class-string<\Throwable> $expectResult
-     * @return void
      */
     private function doTestIntegration(string $file, string $message, ?string $condition, array $composerConfig, ?array $lock, ?array $installed, string $run, $expectLock, ?array $expectInstalled, ?string $expectOutput, string $expect, $expectResult): void
     {
@@ -343,27 +312,27 @@ class InstallerTest extends TestCase
         $lockJsonMock = $this->getMockBuilder('Composer\Json\JsonFile')->disableOriginalConstructor()->getMock();
         $lockJsonMock->expects($this->any())
             ->method('read')
-            ->will($this->returnCallback(function () use (&$lockData) {
+            ->will($this->returnCallback(static function () use (&$lockData) {
                 return json_decode($lockData, true);
             }));
         $lockJsonMock->expects($this->any())
             ->method('exists')
-            ->will($this->returnCallback(function () use (&$lockData): bool {
+            ->will($this->returnCallback(static function () use (&$lockData): bool {
                 return $lockData !== null;
             }));
         $lockJsonMock->expects($this->any())
             ->method('write')
-            ->will($this->returnCallback(function ($value, $options = 0) use (&$lockData): void {
+            ->will($this->returnCallback(static function ($value, $options = 0) use (&$lockData): void {
                 $lockData = json_encode($value, JSON_PRETTY_PRINT);
             }));
 
         if ($expectLock) {
-            $actualLock = array();
+            $actualLock = [];
             $lockJsonMock->expects($this->atLeastOnce())
                 ->method('write')
-                ->will($this->returnCallback(function ($hash, $options) use (&$actualLock): void {
+                ->will($this->returnCallback(static function ($hash, $options) use (&$actualLock): void {
                     // need to do assertion outside of mock for nice phpunit output
-                    // so store value temporarily in reference for later assetion
+                    // so store value temporarily in reference for later assertion
                     $actualLock = $hash;
                 }));
         } elseif ($expectLock === false) {
@@ -377,7 +346,7 @@ class InstallerTest extends TestCase
 
         $eventDispatcher = $this->getMockBuilder('Composer\EventDispatcher\EventDispatcher')->disableOriginalConstructor()->getMock();
         $autoloadGenerator = $this->getMockBuilder('Composer\Autoload\AutoloadGenerator')
-            ->setConstructorArgs(array($eventDispatcher))
+            ->setConstructorArgs([$eventDispatcher])
             ->getMock();
         $composer->setAutoloadGenerator($autoloadGenerator);
         $composer->setEventDispatcher($eventDispatcher);
@@ -390,7 +359,7 @@ class InstallerTest extends TestCase
         $install->addOption('ignore-platform-req', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY);
         $install->addOption('no-dev', null, InputOption::VALUE_NONE);
         $install->addOption('dry-run', null, InputOption::VALUE_NONE);
-        $install->setCode(function ($input, $output) use ($installer): int {
+        $install->setCode(static function ($input, $output) use ($installer): int {
             $ignorePlatformReqs = $input->getOption('ignore-platform-reqs') ?: ($input->getOption('ignore-platform-req') ?: false);
 
             $installer
@@ -415,10 +384,10 @@ class InstallerTest extends TestCase
         $update->addOption('prefer-stable', null, InputOption::VALUE_NONE);
         $update->addOption('prefer-lowest', null, InputOption::VALUE_NONE);
         $update->addArgument('packages', InputArgument::IS_ARRAY | InputArgument::OPTIONAL);
-        $update->setCode(function ($input, $output) use ($installer): int {
+        $update->setCode(static function ($input, $output) use ($installer): int {
             $packages = $input->getArgument('packages');
-            $filteredPackages = array_filter($packages, function ($package): bool {
-                return !in_array($package, array('lock', 'nothing', 'mirrors'), true);
+            $filteredPackages = array_filter($packages, static function ($package): bool {
+                return !in_array($package, ['lock', 'nothing', 'mirrors'], true);
             });
             $updateMirrors = $input->getOption('lock') || count($filteredPackages) !== count($packages);
             $packages = $filteredPackages;
@@ -476,7 +445,7 @@ class InstallerTest extends TestCase
         }
 
         if ($expectInstalled !== null) {
-            $actualInstalled = array();
+            $actualInstalled = [];
             $dumper = new ArrayDumper();
 
             foreach ($repositoryManager->getLocalRepository()->getCanonicalPackages() as $package) {
@@ -485,7 +454,7 @@ class InstallerTest extends TestCase
                 $actualInstalled[] = $package;
             }
 
-            usort($actualInstalled, function ($a, $b): int {
+            usort($actualInstalled, static function ($a, $b): int {
                 return strcmp($a['name'], $b['name']);
             });
 
@@ -504,24 +473,23 @@ class InstallerTest extends TestCase
         }
     }
 
-    public function provideSlowIntegrationTests(): array
+    public static function provideSlowIntegrationTests(): array
     {
-        return $this->loadIntegrationTests('installer-slow/');
+        return self::loadIntegrationTests('installer-slow/');
     }
 
-    public function provideIntegrationTests(): array
+    public static function provideIntegrationTests(): array
     {
-        return $this->loadIntegrationTests('installer/');
+        return self::loadIntegrationTests('installer/');
     }
 
     /**
-     * @param  string $path
      * @return mixed[]
      */
-    public function loadIntegrationTests(string $path): array
+    public static function loadIntegrationTests(string $path): array
     {
-        $fixturesDir = realpath(__DIR__.'/Fixtures/'.$path);
-        $tests = array();
+        $fixturesDir = (string) realpath(__DIR__.'/Fixtures/'.$path);
+        $tests = [];
 
         foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($fixturesDir), \RecursiveIteratorIterator::LEAVES_ONLY) as $file) {
             $file = (string) $file;
@@ -531,12 +499,12 @@ class InstallerTest extends TestCase
             }
 
             try {
-                $testData = $this->readTestFile($file, $fixturesDir);
+                $testData = self::readTestFile($file, $fixturesDir);
 
-                $installed = array();
-                $installedDev = array();
-                $lock = array();
-                $expectLock = array();
+                $installed = [];
+                $installedDev = [];
+                $lock = [];
+                $expectLock = [];
                 $expectInstalled = null;
                 $expectResult = 0;
 
@@ -596,7 +564,7 @@ class InstallerTest extends TestCase
                 die(sprintf('Test "%s" is not valid: '.$e->getMessage(), str_replace($fixturesDir.'/', '', $file)));
             }
 
-            $tests[basename($file)] = array(str_replace($fixturesDir.'/', '', $file), $message, $condition, $composer, $lock, $installed, $run, $expectLock, $expectInstalled, $expectOutput, $expectOutputOptimized, $expect, $expectResult);
+            $tests[basename($file)] = [str_replace($fixturesDir.'/', '', $file), $message, $condition, $composer, $lock, $installed, $run, $expectLock, $expectInstalled, $expectOutput, $expectOutputOptimized, $expect, $expectResult];
         }
 
         return $tests;
@@ -605,11 +573,11 @@ class InstallerTest extends TestCase
     /**
      * @return mixed[]
      */
-    protected function readTestFile(string $file, string $fixturesDir): array
+    protected static function readTestFile(string $file, string $fixturesDir): array
     {
         $tokens = Preg::split('#(?:^|\n*)--([A-Z-]+)--\n#', file_get_contents($file), -1, PREG_SPLIT_DELIM_CAPTURE);
 
-        $sectionInfo = array(
+        $sectionInfo = [
             'TEST' => true,
             'CONDITION' => false,
             'COMPOSER' => true,
@@ -623,10 +591,10 @@ class InstallerTest extends TestCase
             'EXPECT-EXIT-CODE' => false,
             'EXPECT-EXCEPTION' => false,
             'EXPECT' => true,
-        );
+        ];
 
         $section = null;
-        $data = array();
+        $data = [];
         foreach ($tokens as $i => $token) {
             if (null === $section && empty($token)) {
                 continue; // skip leading blank

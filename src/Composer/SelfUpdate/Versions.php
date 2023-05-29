@@ -45,9 +45,6 @@ class Versions
         $this->config = $config;
     }
 
-    /**
-     * @return string
-     */
     public function getChannel(): string
     {
         if ($this->channel) {
@@ -57,7 +54,7 @@ class Versions
         $channelFile = $this->config->get('home').'/update-channel';
         if (file_exists($channelFile)) {
             $channel = trim(file_get_contents($channelFile));
-            if (in_array($channel, array('stable', 'preview', 'snapshot', '2.2'), true)) {
+            if (in_array($channel, ['stable', 'preview', 'snapshot', '2.2'], true)) {
                 return $this->channel = $channel;
             }
         }
@@ -65,15 +62,10 @@ class Versions
         return $this->channel = 'stable';
     }
 
-    /**
-     * @param string $channel
-     *
-     * @return void
-     */
-    public function setChannel(string $channel, IOInterface $io = null): void
+    public function setChannel(string $channel, ?IOInterface $io = null): void
     {
-        if (!in_array($channel, self::$channels, true)) {
-            throw new \InvalidArgumentException('Invalid channel '.$channel.', must be one of: ' . implode(', ', self::$channels));
+        if (!in_array($channel, self::CHANNELS, true)) {
+            throw new \InvalidArgumentException('Invalid channel '.$channel.', must be one of: ' . implode(', ', self::CHANNELS));
         }
 
         $channelFile = $this->config->get('home').'/update-channel';
@@ -90,8 +82,6 @@ class Versions
     }
 
     /**
-     * @param string|null $channel
-     *
      * @return array{path: string, version: string, min-php: int, eol?: true}
      */
     public function getLatest(?string $channel = null): array

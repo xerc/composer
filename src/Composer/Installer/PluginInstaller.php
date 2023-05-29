@@ -30,7 +30,7 @@ use React\Promise\PromiseInterface;
  */
 class PluginInstaller extends LibraryInstaller
 {
-    public function __construct(IOInterface $io, PartialComposer $composer, Filesystem $fs = null, BinaryInstaller $binaryInstaller = null)
+    public function __construct(IOInterface $io, PartialComposer $composer, ?Filesystem $fs = null, ?BinaryInstaller $binaryInstaller = null)
     {
         parent::__construct($io, $composer, 'composer-plugin', $fs, $binaryInstaller);
     }
@@ -46,11 +46,11 @@ class PluginInstaller extends LibraryInstaller
     /**
      * @inheritDoc
      */
-    public function prepare($type, PackageInterface $package, PackageInterface $prevPackage = null)
+    public function prepare($type, PackageInterface $package, ?PackageInterface $prevPackage = null)
     {
         // fail install process early if it is going to fail due to a plugin not being allowed
         if (($type === 'install' || $type === 'update') && !$this->getPluginManager()->arePluginsDisabled('local')) {
-            $this->getPluginManager()->isPluginAllowed($package->getName(), false);
+            $this->getPluginManager()->isPluginAllowed($package->getName(), false, true === ($package->getExtra()['plugin-optional'] ?? false));
         }
 
         return parent::prepare($type, $package, $prevPackage);
@@ -59,7 +59,7 @@ class PluginInstaller extends LibraryInstaller
     /**
      * @inheritDoc
      */
-    public function download(PackageInterface $package, PackageInterface $prevPackage = null)
+    public function download(PackageInterface $package, ?PackageInterface $prevPackage = null)
     {
         $extra = $package->getExtra();
         if (empty($extra['class'])) {

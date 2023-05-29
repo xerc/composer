@@ -24,21 +24,21 @@ class InstalledRepositoryTest extends TestCase
     public function testFindPackagesWithReplacersAndProviders(): void
     {
         $arrayRepoOne = new InstalledArrayRepository;
-        $arrayRepoOne->addPackage($foo = $this->getPackage('foo', '1'));
-        $arrayRepoOne->addPackage($foo2 = $this->getPackage('foo', '2'));
+        $arrayRepoOne->addPackage($foo = self::getPackage('foo', '1'));
+        $arrayRepoOne->addPackage($foo2 = self::getPackage('foo', '2'));
 
         $arrayRepoTwo = new InstalledArrayRepository;
-        $arrayRepoTwo->addPackage($bar = $this->getPackage('bar', '1'));
-        $arrayRepoTwo->addPackage($bar2 = $this->getPackage('bar', '2'));
+        $arrayRepoTwo->addPackage($bar = self::getPackage('bar', '1'));
+        $arrayRepoTwo->addPackage($bar2 = self::getPackage('bar', '2'));
 
-        $foo->setReplaces(array('provided' => new Link('foo', 'provided', new MatchAllConstraint())));
-        $bar2->setProvides(array('provided' => new Link('bar', 'provided', new MatchAllConstraint())));
+        $foo->setReplaces(['provided' => new Link('foo', 'provided', new MatchAllConstraint())]);
+        $bar2->setProvides(['provided' => new Link('bar', 'provided', new MatchAllConstraint())]);
 
-        $repo = new InstalledRepository(array($arrayRepoOne, $arrayRepoTwo));
+        $repo = new InstalledRepository([$arrayRepoOne, $arrayRepoTwo]);
 
-        $this->assertEquals(array($foo2), $repo->findPackagesWithReplacersAndProviders('foo', '2'));
-        $this->assertEquals(array($bar), $repo->findPackagesWithReplacersAndProviders('bar', '1'));
-        $this->assertEquals(array($foo, $bar2), $repo->findPackagesWithReplacersAndProviders('provided'));
+        $this->assertEquals([$foo2], $repo->findPackagesWithReplacersAndProviders('foo', '2'));
+        $this->assertEquals([$bar], $repo->findPackagesWithReplacersAndProviders('bar', '1'));
+        $this->assertEquals([$foo, $bar2], $repo->findPackagesWithReplacersAndProviders('provided'));
     }
 
     public function testAddRepository(): void
@@ -47,6 +47,6 @@ class InstalledRepositoryTest extends TestCase
 
         self::expectException('LogicException');
 
-        new InstalledRepository(array($arrayRepoOne));
+        new InstalledRepository([$arrayRepoOne]);
     }
 }

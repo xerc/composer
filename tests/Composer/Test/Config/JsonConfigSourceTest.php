@@ -24,12 +24,7 @@ class JsonConfigSourceTest extends TestCase
     /** @var string */
     private $workingDir;
 
-    /**
-     * @param string $name
-     *
-     * @return string
-     */
-    protected function fixturePath(string $name): string
+    protected static function fixturePath(string $name): string
     {
         return __DIR__.'/Fixtures/'.$name;
     }
@@ -51,59 +46,59 @@ class JsonConfigSourceTest extends TestCase
     public function testAddRepository(): void
     {
         $config = $this->workingDir.'/composer.json';
-        copy($this->fixturePath('composer-repositories.json'), $config);
+        copy(self::fixturePath('composer-repositories.json'), $config);
         $jsonConfigSource = new JsonConfigSource(new JsonFile($config));
-        $jsonConfigSource->addRepository('example_tld', array('type' => 'git', 'url' => 'example.tld'));
+        $jsonConfigSource->addRepository('example_tld', ['type' => 'git', 'url' => 'example.tld']);
 
-        $this->assertFileEquals($this->fixturePath('config/config-with-exampletld-repository.json'), $config);
+        $this->assertFileEquals(self::fixturePath('config/config-with-exampletld-repository.json'), $config);
     }
 
     public function testAddRepositoryWithOptions(): void
     {
         $config = $this->workingDir.'/composer.json';
-        copy($this->fixturePath('composer-repositories.json'), $config);
+        copy(self::fixturePath('composer-repositories.json'), $config);
         $jsonConfigSource = new JsonConfigSource(new JsonFile($config));
-        $jsonConfigSource->addRepository('example_tld', array(
+        $jsonConfigSource->addRepository('example_tld', [
             'type' => 'composer',
             'url' => 'https://example.tld',
-            'options' => array(
-                'ssl' => array(
+            'options' => [
+                'ssl' => [
                     'local_cert' => '/home/composer/.ssl/composer.pem',
-                ),
-            ),
-        ));
+                ],
+            ],
+        ]);
 
-        $this->assertFileEquals($this->fixturePath('config/config-with-exampletld-repository-and-options.json'), $config);
+        $this->assertFileEquals(self::fixturePath('config/config-with-exampletld-repository-and-options.json'), $config);
     }
 
     public function testRemoveRepository(): void
     {
         $config = $this->workingDir.'/composer.json';
-        copy($this->fixturePath('config/config-with-exampletld-repository.json'), $config);
+        copy(self::fixturePath('config/config-with-exampletld-repository.json'), $config);
         $jsonConfigSource = new JsonConfigSource(new JsonFile($config));
         $jsonConfigSource->removeRepository('example_tld');
 
-        $this->assertFileEquals($this->fixturePath('composer-repositories.json'), $config);
+        $this->assertFileEquals(self::fixturePath('composer-repositories.json'), $config);
     }
 
     public function testAddPackagistRepositoryWithFalseValue(): void
     {
         $config = $this->workingDir.'/composer.json';
-        copy($this->fixturePath('composer-repositories.json'), $config);
+        copy(self::fixturePath('composer-repositories.json'), $config);
         $jsonConfigSource = new JsonConfigSource(new JsonFile($config));
         $jsonConfigSource->addRepository('packagist', false);
 
-        $this->assertFileEquals($this->fixturePath('config/config-with-packagist-false.json'), $config);
+        $this->assertFileEquals(self::fixturePath('config/config-with-packagist-false.json'), $config);
     }
 
     public function testRemovePackagist(): void
     {
         $config = $this->workingDir.'/composer.json';
-        copy($this->fixturePath('config/config-with-packagist-false.json'), $config);
+        copy(self::fixturePath('config/config-with-packagist-false.json'), $config);
         $jsonConfigSource = new JsonConfigSource(new JsonFile($config));
         $jsonConfigSource->removeRepository('packagist');
 
-        $this->assertFileEquals($this->fixturePath('composer-repositories.json'), $config);
+        $this->assertFileEquals(self::fixturePath('composer-repositories.json'), $config);
     }
 
     /**
@@ -150,115 +145,104 @@ class JsonConfigSourceTest extends TestCase
     }
 
     /**
-     * @param string $type
-     * @param string $name
-     * @param string $value
-     * @param string $fixtureBasename
-     * @param string $before
-     *
      * @return string[]
      *
      * @phpstan-return array{string, string, string, string, string}
      */
-    protected function addLinkDataArguments(string $type, string $name, string $value, string $fixtureBasename, string $before): array
+    protected static function addLinkDataArguments(string $type, string $name, string $value, string $fixtureBasename, string $before): array
     {
-        return array(
+        return [
             $before,
             $type,
             $name,
             $value,
-            $this->fixturePath('addLink/'.$fixtureBasename.'.json'),
-        );
+            self::fixturePath('addLink/'.$fixtureBasename.'.json'),
+        ];
     }
 
     /**
      * Provide data for testAddLink
      */
-    public function provideAddLinkData(): array
+    public static function provideAddLinkData(): array
     {
-        $empty = $this->fixturePath('composer-empty.json');
-        $oneOfEverything = $this->fixturePath('composer-one-of-everything.json');
-        $twoOfEverything = $this->fixturePath('composer-two-of-everything.json');
+        $empty = self::fixturePath('composer-empty.json');
+        $oneOfEverything = self::fixturePath('composer-one-of-everything.json');
+        $twoOfEverything = self::fixturePath('composer-two-of-everything.json');
 
-        return array(
-            $this->addLinkDataArguments('require', 'my-vend/my-lib', '1.*', 'require-from-empty', $empty),
-            $this->addLinkDataArguments('require', 'my-vend/my-lib', '1.*', 'require-from-oneOfEverything', $oneOfEverything),
-            $this->addLinkDataArguments('require', 'my-vend/my-lib', '1.*', 'require-from-twoOfEverything', $twoOfEverything),
+        return [
+            self::addLinkDataArguments('require', 'my-vend/my-lib', '1.*', 'require-from-empty', $empty),
+            self::addLinkDataArguments('require', 'my-vend/my-lib', '1.*', 'require-from-oneOfEverything', $oneOfEverything),
+            self::addLinkDataArguments('require', 'my-vend/my-lib', '1.*', 'require-from-twoOfEverything', $twoOfEverything),
 
-            $this->addLinkDataArguments('require-dev', 'my-vend/my-lib-tests', '1.*', 'require-dev-from-empty', $empty),
-            $this->addLinkDataArguments('require-dev', 'my-vend/my-lib-tests', '1.*', 'require-dev-from-oneOfEverything', $oneOfEverything),
-            $this->addLinkDataArguments('require-dev', 'my-vend/my-lib-tests', '1.*', 'require-dev-from-twoOfEverything', $twoOfEverything),
+            self::addLinkDataArguments('require-dev', 'my-vend/my-lib-tests', '1.*', 'require-dev-from-empty', $empty),
+            self::addLinkDataArguments('require-dev', 'my-vend/my-lib-tests', '1.*', 'require-dev-from-oneOfEverything', $oneOfEverything),
+            self::addLinkDataArguments('require-dev', 'my-vend/my-lib-tests', '1.*', 'require-dev-from-twoOfEverything', $twoOfEverything),
 
-            $this->addLinkDataArguments('provide', 'my-vend/my-lib-interface', '1.*', 'provide-from-empty', $empty),
-            $this->addLinkDataArguments('provide', 'my-vend/my-lib-interface', '1.*', 'provide-from-oneOfEverything', $oneOfEverything),
-            $this->addLinkDataArguments('provide', 'my-vend/my-lib-interface', '1.*', 'provide-from-twoOfEverything', $twoOfEverything),
+            self::addLinkDataArguments('provide', 'my-vend/my-lib-interface', '1.*', 'provide-from-empty', $empty),
+            self::addLinkDataArguments('provide', 'my-vend/my-lib-interface', '1.*', 'provide-from-oneOfEverything', $oneOfEverything),
+            self::addLinkDataArguments('provide', 'my-vend/my-lib-interface', '1.*', 'provide-from-twoOfEverything', $twoOfEverything),
 
-            $this->addLinkDataArguments('suggest', 'my-vend/my-optional-extension', '1.*', 'suggest-from-empty', $empty),
-            $this->addLinkDataArguments('suggest', 'my-vend/my-optional-extension', '1.*', 'suggest-from-oneOfEverything', $oneOfEverything),
-            $this->addLinkDataArguments('suggest', 'my-vend/my-optional-extension', '1.*', 'suggest-from-twoOfEverything', $twoOfEverything),
+            self::addLinkDataArguments('suggest', 'my-vend/my-optional-extension', '1.*', 'suggest-from-empty', $empty),
+            self::addLinkDataArguments('suggest', 'my-vend/my-optional-extension', '1.*', 'suggest-from-oneOfEverything', $oneOfEverything),
+            self::addLinkDataArguments('suggest', 'my-vend/my-optional-extension', '1.*', 'suggest-from-twoOfEverything', $twoOfEverything),
 
-            $this->addLinkDataArguments('replace', 'my-vend/other-app', '1.*', 'replace-from-empty', $empty),
-            $this->addLinkDataArguments('replace', 'my-vend/other-app', '1.*', 'replace-from-oneOfEverything', $oneOfEverything),
-            $this->addLinkDataArguments('replace', 'my-vend/other-app', '1.*', 'replace-from-twoOfEverything', $twoOfEverything),
+            self::addLinkDataArguments('replace', 'my-vend/other-app', '1.*', 'replace-from-empty', $empty),
+            self::addLinkDataArguments('replace', 'my-vend/other-app', '1.*', 'replace-from-oneOfEverything', $oneOfEverything),
+            self::addLinkDataArguments('replace', 'my-vend/other-app', '1.*', 'replace-from-twoOfEverything', $twoOfEverything),
 
-            $this->addLinkDataArguments('conflict', 'my-vend/my-old-app', '1.*', 'conflict-from-empty', $empty),
-            $this->addLinkDataArguments('conflict', 'my-vend/my-old-app', '1.*', 'conflict-from-oneOfEverything', $oneOfEverything),
-            $this->addLinkDataArguments('conflict', 'my-vend/my-old-app', '1.*', 'conflict-from-twoOfEverything', $twoOfEverything),
-        );
+            self::addLinkDataArguments('conflict', 'my-vend/my-old-app', '1.*', 'conflict-from-empty', $empty),
+            self::addLinkDataArguments('conflict', 'my-vend/my-old-app', '1.*', 'conflict-from-oneOfEverything', $oneOfEverything),
+            self::addLinkDataArguments('conflict', 'my-vend/my-old-app', '1.*', 'conflict-from-twoOfEverything', $twoOfEverything),
+        ];
     }
 
     /**
-     * @param string      $type
-     * @param string      $name
-     * @param string      $fixtureBasename
-     * @param string|null $after
-     *
      * @return string[]
      *
      * @phpstan-return array{string, string, string, string}
      */
-    protected function removeLinkDataArguments(string $type, string $name, string $fixtureBasename, ?string $after = null): array
+    protected static function removeLinkDataArguments(string $type, string $name, string $fixtureBasename, ?string $after = null): array
     {
-        return array(
-            $this->fixturePath('removeLink/'.$fixtureBasename.'.json'),
+        return [
+            self::fixturePath('removeLink/'.$fixtureBasename.'.json'),
             $type,
             $name,
-            $after ?: $this->fixturePath('removeLink/'.$fixtureBasename.'-after.json'),
-        );
+            $after ?: self::fixturePath('removeLink/'.$fixtureBasename.'-after.json'),
+        ];
     }
 
     /**
      * Provide data for testRemoveLink
      */
-    public function provideRemoveLinkData(): array
+    public static function provideRemoveLinkData(): array
     {
-        $oneOfEverything = $this->fixturePath('composer-one-of-everything.json');
-        $twoOfEverything = $this->fixturePath('composer-two-of-everything.json');
+        $oneOfEverything = self::fixturePath('composer-one-of-everything.json');
+        $twoOfEverything = self::fixturePath('composer-two-of-everything.json');
 
-        return array(
-            $this->removeLinkDataArguments('require', 'my-vend/my-lib', 'require-to-empty'),
-            $this->removeLinkDataArguments('require', 'my-vend/my-lib', 'require-to-oneOfEverything', $oneOfEverything),
-            $this->removeLinkDataArguments('require', 'my-vend/my-lib', 'require-to-twoOfEverything', $twoOfEverything),
+        return [
+            self::removeLinkDataArguments('require', 'my-vend/my-lib', 'require-to-empty'),
+            self::removeLinkDataArguments('require', 'my-vend/my-lib', 'require-to-oneOfEverything', $oneOfEverything),
+            self::removeLinkDataArguments('require', 'my-vend/my-lib', 'require-to-twoOfEverything', $twoOfEverything),
 
-            $this->removeLinkDataArguments('require-dev', 'my-vend/my-lib-tests', 'require-dev-to-empty'),
-            $this->removeLinkDataArguments('require-dev', 'my-vend/my-lib-tests', 'require-dev-to-oneOfEverything', $oneOfEverything),
-            $this->removeLinkDataArguments('require-dev', 'my-vend/my-lib-tests', 'require-dev-to-twoOfEverything', $twoOfEverything),
+            self::removeLinkDataArguments('require-dev', 'my-vend/my-lib-tests', 'require-dev-to-empty'),
+            self::removeLinkDataArguments('require-dev', 'my-vend/my-lib-tests', 'require-dev-to-oneOfEverything', $oneOfEverything),
+            self::removeLinkDataArguments('require-dev', 'my-vend/my-lib-tests', 'require-dev-to-twoOfEverything', $twoOfEverything),
 
-            $this->removeLinkDataArguments('provide', 'my-vend/my-lib-interface', 'provide-to-empty'),
-            $this->removeLinkDataArguments('provide', 'my-vend/my-lib-interface', 'provide-to-oneOfEverything', $oneOfEverything),
-            $this->removeLinkDataArguments('provide', 'my-vend/my-lib-interface', 'provide-to-twoOfEverything', $twoOfEverything),
+            self::removeLinkDataArguments('provide', 'my-vend/my-lib-interface', 'provide-to-empty'),
+            self::removeLinkDataArguments('provide', 'my-vend/my-lib-interface', 'provide-to-oneOfEverything', $oneOfEverything),
+            self::removeLinkDataArguments('provide', 'my-vend/my-lib-interface', 'provide-to-twoOfEverything', $twoOfEverything),
 
-            $this->removeLinkDataArguments('suggest', 'my-vend/my-optional-extension', 'suggest-to-empty'),
-            $this->removeLinkDataArguments('suggest', 'my-vend/my-optional-extension', 'suggest-to-oneOfEverything', $oneOfEverything),
-            $this->removeLinkDataArguments('suggest', 'my-vend/my-optional-extension', 'suggest-to-twoOfEverything', $twoOfEverything),
+            self::removeLinkDataArguments('suggest', 'my-vend/my-optional-extension', 'suggest-to-empty'),
+            self::removeLinkDataArguments('suggest', 'my-vend/my-optional-extension', 'suggest-to-oneOfEverything', $oneOfEverything),
+            self::removeLinkDataArguments('suggest', 'my-vend/my-optional-extension', 'suggest-to-twoOfEverything', $twoOfEverything),
 
-            $this->removeLinkDataArguments('replace', 'my-vend/other-app', 'replace-to-empty'),
-            $this->removeLinkDataArguments('replace', 'my-vend/other-app', 'replace-to-oneOfEverything', $oneOfEverything),
-            $this->removeLinkDataArguments('replace', 'my-vend/other-app', 'replace-to-twoOfEverything', $twoOfEverything),
+            self::removeLinkDataArguments('replace', 'my-vend/other-app', 'replace-to-empty'),
+            self::removeLinkDataArguments('replace', 'my-vend/other-app', 'replace-to-oneOfEverything', $oneOfEverything),
+            self::removeLinkDataArguments('replace', 'my-vend/other-app', 'replace-to-twoOfEverything', $twoOfEverything),
 
-            $this->removeLinkDataArguments('conflict', 'my-vend/my-old-app', 'conflict-to-empty'),
-            $this->removeLinkDataArguments('conflict', 'my-vend/my-old-app', 'conflict-to-oneOfEverything', $oneOfEverything),
-            $this->removeLinkDataArguments('conflict', 'my-vend/my-old-app', 'conflict-to-twoOfEverything', $twoOfEverything),
-        );
+            self::removeLinkDataArguments('conflict', 'my-vend/my-old-app', 'conflict-to-empty'),
+            self::removeLinkDataArguments('conflict', 'my-vend/my-old-app', 'conflict-to-oneOfEverything', $oneOfEverything),
+            self::removeLinkDataArguments('conflict', 'my-vend/my-old-app', 'conflict-to-twoOfEverything', $twoOfEverything),
+        ];
     }
 }

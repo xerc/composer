@@ -133,7 +133,9 @@ Optional.
 
 ### readme
 
-A relative path to the readme document.
+A relative path to the readme document. Defaults to `README.md`.
+
+This is mainly useful for packages not on GitHub, as for GitHub packages Packagist.org will use the readme API to fetch the one detected by GitHub.
 
 Optional.
 
@@ -182,8 +184,8 @@ An Example for disjunctive licenses:
 ```json
 {
     "license": [
-       "LGPL-2.1-only",
-       "GPL-3.0-or-later"
+        "LGPL-2.1-only",
+        "GPL-3.0-or-later"
     ]
 }
 ```
@@ -248,6 +250,7 @@ Support information includes the following:
 * **docs:** URL to the documentation.
 * **rss:** URL to the RSS feed.
 * **chat:** URL to the chat channel.
+* **security:** URL to the vulnerability disclosure policy (VDP).
 
 An example:
 
@@ -385,8 +388,8 @@ Example:
 
 ```json
 {
-    "require" : {
-        "php" : ">=7.4",
+    "require": {
+        "php": ">=7.4",
         "ext-mbstring": "*"
     }
 }
@@ -861,16 +864,16 @@ override packages from it.
 Using JSON object notation is also possible. However, JSON key/value pairs
 are to be considered unordered so consistent behaviour cannot be guaranteed.
 
- ```json
+```json
 {
     "repositories": {
-         "foo": {
-             "type": "composer",
-             "url": "http://packages.foo.com"
-         }
+        "foo": {
+            "type": "composer",
+            "url": "http://packages.foo.com"
+        }
     }
 }
- ```
+```
 
 ### config <span>([root-only](04-schema.md#root-package))</span>
 

@@ -46,10 +46,9 @@ class FilesystemRepository extends WritableArrayRepository
      * Initializes filesystem repository.
      *
      * @param JsonFile              $repositoryFile repository json file
-     * @param bool                  $dumpVersions
      * @param ?RootPackageInterface $rootPackage    Must be provided if $dumpVersions is true
      */
-    public function __construct(JsonFile $repositoryFile, bool $dumpVersions = false, RootPackageInterface $rootPackage = null, Filesystem $filesystem = null)
+    public function __construct(JsonFile $repositoryFile, bool $dumpVersions = false, ?RootPackageInterface $rootPackage = null, ?Filesystem $filesystem = null)
     {
         parent::__construct();
         $this->file = $repositoryFile;
@@ -120,7 +119,7 @@ class FilesystemRepository extends WritableArrayRepository
      */
     public function write(bool $devMode, InstallationManager $installationManager)
     {
-        $data = array('packages' => array(), 'dev' => $devMode, 'dev-package-names' => array());
+        $data = ['packages' => [], 'dev' => $devMode, 'dev-package-names' => []];
         $dumper = new ArrayDumper();
 
         // make sure the directory is created so we can realpath it
@@ -130,7 +129,7 @@ class FilesystemRepository extends WritableArrayRepository
         $this->filesystem->ensureDirectoryExists($repoDir);
 
         $repoDir = $this->filesystem->normalizePath(realpath($repoDir));
-        $installPaths = array();
+        $installPaths = [];
 
         foreach ($this->getCanonicalPackages() as $package) {
             $pkgArray = $dumper->dump($package);
@@ -164,19 +163,20 @@ class FilesystemRepository extends WritableArrayRepository
 
             $this->filesystem->filePutContentsIfModified($repoDir.'/installed.php', '<?php return ' . $this->dumpToPhpCode($versions) . ';'."\n");
             $installedVersionsClass = file_get_contents(__DIR__.'/../InstalledVersions.php');
-            $this->filesystem->filePutContentsIfModified($repoDir.'/InstalledVersions.php', $installedVersionsClass);
 
-            \Composer\InstalledVersions::reload($versions);
+            // this normally should not happen but during upgrades of Composer when it is installed in the project it is a possibility
+            if ($installedVersionsClass !== false) {
+                $this->filesystem->filePutContentsIfModified($repoDir.'/InstalledVersions.php', $installedVersionsClass);
+
+                \Composer\InstalledVersions::reload($versions);
+            }
         }
     }
 
     /**
      * @param array<mixed> $array
-     * @param int $level
-     *
-     * @return string
      */
-    private function dumpToPhpCode(array $array = array(), int $level = 0): string
+    private function dumpToPhpCode(array $array = [], int $level = 0): string
     {
         $lines = "array(\n";
         $level++;
@@ -325,7 +325,7 @@ class FilesystemRepository extends WritableArrayRepository
             'reference' => $reference,
             'type' => $package->getType(),
             'install_path' => $installPath,
-            'aliases' => array(),
+            'aliases' => [],
             'dev_requirement' => isset($devPackages[$package->getName()]),
         ];
 

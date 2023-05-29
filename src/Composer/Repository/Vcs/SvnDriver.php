@@ -111,7 +111,7 @@ class SvnDriver extends VcsDriver
      */
     public function getSource(string $identifier): array
     {
-        return array('type' => 'svn', 'url' => $this->baseUrl, 'reference' => $identifier);
+        return ['type' => 'svn', 'url' => $this->baseUrl, 'reference' => $identifier];
     }
 
     /**
@@ -173,10 +173,6 @@ class SvnDriver extends VcsDriver
         return $this->infoCache[$identifier];
     }
 
-    /**
-     * @param string $file
-     * @param string $identifier
-     */
     public function getFileContent(string $file, string $identifier): ?string
     {
         $identifier = '/' . trim($identifier, '/') . '/';
@@ -211,7 +207,7 @@ class SvnDriver extends VcsDriver
         $identifier = '/' . trim($identifier, '/') . '/';
 
         Preg::match('{^(.+?)(@\d+)?/$}', $identifier, $match);
-        if (!empty($match[2])) {
+        if (null !== $match[2] && null !== $match[1]) {
             $path = $match[1];
             $rev = $match[2];
         } else {
@@ -221,7 +217,7 @@ class SvnDriver extends VcsDriver
 
         $output = $this->execute('svn info', $this->baseUrl . $path . $rev);
         foreach ($this->process->splitLines($output) as $line) {
-            if ($line && Preg::isMatch('{^Last Changed Date: ([^(]+)}', $line, $match)) {
+            if ($line && Preg::isMatchStrictGroups('{^Last Changed Date: ([^(]+)}', $line, $match)) {
                 return new \DateTimeImmutable($match[1], new \DateTimeZone('UTC'));
             }
         }
@@ -235,19 +231,24 @@ class SvnDriver extends VcsDriver
     public function getTags(): array
     {
         if (null === $this->tags) {
-            $tags = array();
+            $tags = [];
 
             if ($this->tagsPath !== false) {
                 $output = $this->execute('svn ls --verbose', $this->baseUrl . '/' . $this->tagsPath);
                 if ($output) {
+                    $lastRev = 0;
                     foreach ($this->process->splitLines($output) as $line) {
                         $line = trim($line);
                         if ($line && Preg::isMatch('{^\s*(\S+).*?(\S+)\s*$}', $line, $match)) {
-                            if (isset($match[1], $match[2]) && $match[2] !== './') {
-                                $tags[rtrim($match[2], '/')] = $this->buildIdentifier(
-                                    '/' . $this->tagsPath . '/' . $match[2],
-                                    $match[1]
-                                );
+                            if (isset($match[1], $match[2])) {
+                                if ($match[2] === './') {
+                                    $lastRev = (int) $match[1];
+                                } else {
+                                    $tags[rtrim($match[2], '/')] = $this->buildIdentifier(
+                                        '/' . $this->tagsPath . '/' . $match[2],
+                                        max($lastRev, (int) $match[1])
+                                    );
+                                }
                             }
                         }
                     }
@@ -266,7 +267,7 @@ class SvnDriver extends VcsDriver
     public function getBranches(): array
     {
         if (null === $this->branches) {
-            $branches = array();
+            $branches = [];
 
             if (false === $this->trunkPath) {
                 $trunkParent = $this->baseUrl . '/';
@@ -282,7 +283,7 @@ class SvnDriver extends VcsDriver
                         if (isset($match[1], $match[2]) && $match[2] === './') {
                             $branches['trunk'] = $this->buildIdentifier(
                                 '/' . $this->trunkPath,
-                                $match[1]
+                                (int) $match[1]
                             );
                             $this->rootIdentifier = $branches['trunk'];
                             break;
@@ -295,14 +296,19 @@ class SvnDriver extends VcsDriver
             if ($this->branchesPath !== false) {
                 $output = $this->execute('svn ls --verbose', $this->baseUrl . '/' . $this->branchesPath);
                 if ($output) {
+                    $lastRev = 0;
                     foreach ($this->process->splitLines(trim($output)) as $line) {
                         $line = trim($line);
                         if ($line && Preg::isMatch('{^\s*(\S+).*?(\S+)\s*$}', $line, $match)) {
-                            if (isset($match[1], $match[2]) && $match[2] !== './') {
-                                $branches[rtrim($match[2], '/')] = $this->buildIdentifier(
-                                    '/' . $this->branchesPath . '/' . $match[2],
-                                    $match[1]
-                                );
+                            if (isset($match[1], $match[2])) {
+                                if ($match[2] === './') {
+                                    $lastRev = (int) $match[1];
+                                } else {
+                                    $branches[rtrim($match[2], '/')] = $this->buildIdentifier(
+                                        '/' . $this->branchesPath . '/' . $match[2],
+                                        max($lastRev, (int) $match[1])
+                                    );
+                                }
                             }
                         }
                     }
@@ -360,10 +366,6 @@ class SvnDriver extends VcsDriver
 
     /**
      * An absolute path (leading '/') is converted to a file:// url.
-     *
-     * @param string $url
-     *
-     * @return string
      */
     protected static function normalizeUrl(string $url): string
     {
@@ -382,7 +384,6 @@ class SvnDriver extends VcsDriver
      * @param  string            $command The svn command to run.
      * @param  string            $url     The SVN URL.
      * @throws \RuntimeException
-     * @return string
      */
     protected function execute(string $command, string $url): string
     {
@@ -408,11 +409,9 @@ class SvnDriver extends VcsDriver
      * Build the identifier respecting "package-path" config option
      *
      * @param string $baseDir  The path to trunk/branch/tag
-     * @param string $revision The revision mark to add to identifier
-     *
-     * @return string
+     * @param int $revision The revision mark to add to identifier
      */
-    protected function buildIdentifier(string $baseDir, string $revision): string
+    protected function buildIdentifier(string $baseDir, int $revision): string
     {
         return rtrim($baseDir, '/') . $this->packagePath . '/@' . $revision;
     }

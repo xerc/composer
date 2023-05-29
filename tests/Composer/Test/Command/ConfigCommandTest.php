@@ -12,11 +12,7 @@
 
 namespace Composer\Test\Command;
 
-use Composer\Composer;
-use Composer\Config;
-use Composer\Script\Event as ScriptEvent;
 use Composer\Test\TestCase;
-use Composer\Util\Filesystem;
 
 class ConfigCommandTest extends TestCase
 {
@@ -38,7 +34,7 @@ class ConfigCommandTest extends TestCase
         $this->assertSame($expected, json_decode((string) file_get_contents('composer.json'), true));
     }
 
-    public function provideConfigUpdates(): \Generator
+    public static function provideConfigUpdates(): \Generator
     {
         yield 'set scripts' => [
             [],
@@ -105,7 +101,7 @@ class ConfigCommandTest extends TestCase
         $this->assertSame($composerJson, json_decode((string) file_get_contents('composer.json'), true), 'The composer.json should not be modified by config reads');
     }
 
-    public function provideConfigReads(): \Generator
+    public static function provideConfigReads(): \Generator
     {
         yield 'read description' => [
             ['description' => 'foo bar'],
@@ -123,17 +119,17 @@ class ConfigCommandTest extends TestCase
             'vendor',
         ];
         yield 'read repos by named key' => [
-            ['repositories' => ['foo' => ['type' => 'vcs', 'url' => 'https://example.org']]],
+            ['repositories' => ['foo' => ['type' => 'vcs', 'url' => 'https://example.org'], 'packagist.org' => ['type' => 'composer', 'url' => 'https://repo.packagist.org']]],
             ['setting-key' => 'repositories.foo'],
             '{"type":"vcs","url":"https://example.org"}',
         ];
         yield 'read repos by numeric index' => [
-            ['repositories' => [['type' => 'vcs', 'url' => 'https://example.org']]],
+            ['repositories' => [['type' => 'vcs', 'url' => 'https://example.org'], 'packagist.org' => ['type' => 'composer', 'url' => 'https://repo.packagist.org']]],
             ['setting-key' => 'repos.0'],
             '{"type":"vcs","url":"https://example.org"}',
         ];
         yield 'read all repos includes the default packagist' => [
-            ['repositories' => ['foo' => ['type' => 'vcs', 'url' => 'https://example.org']]],
+            ['repositories' => ['foo' => ['type' => 'vcs', 'url' => 'https://example.org'], 'packagist.org' => ['type' => 'composer', 'url' => 'https://repo.packagist.org']]],
             ['setting-key' => 'repos'],
             '{"foo":{"type":"vcs","url":"https://example.org"},"packagist.org":{"type":"composer","url":"https://repo.packagist.org"}}',
         ];

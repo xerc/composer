@@ -27,14 +27,20 @@ in `composer.json`).
 *For the following discussion, let's assume the following sample library
 repository:*
 
-```sh
+```shell
 ~/my-library$ git branch
+```
+```text
 v1
 v2
 my-feature
 another-feature
+```
 
+```shell
 ~/my-library$ git tag
+```
+```text
 v1.0
 v1.0.1
 v1.0.2
@@ -187,6 +193,12 @@ This is the recommended operator for maximum interoperability when writing
 library code.
 
 Example: `^1.2.3`
+
+> **Note:** If you are using PowerShell on Windows, you have to escape
+> carets when using them as argument on the CLI for example when using the
+> `composer require` command. You have to use four
+> subsequent caret operators, e.g. `^^^^1.2.3`, to ensure the caret operator gets
+> passed to Composer correctly.
 
 ## Stability Constraints
 

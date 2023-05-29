@@ -28,21 +28,22 @@ class PackageSorter
      */
     public static function getMostCurrentVersion(array $packages): ?PackageInterface
     {
-        return array_reduce($packages, function ($carry, $pkg) {
-            if ($carry === null) {
-                return $pkg;
+        if (count($packages) === 0) {
+            return null;
+        }
+
+        $highest = reset($packages);
+        foreach ($packages as $candidate) {
+            if ($candidate->isDefaultBranch()) {
+                return $candidate;
             }
 
-            if ($pkg->isDefaultBranch()) {
-                return $pkg;
+            if (version_compare($highest->getVersion(), $candidate->getVersion(), '<')) {
+                $highest = $candidate;
             }
+        }
 
-            if (!$carry->isDefaultBranch() && version_compare($carry->getVersion(), $pkg->getVersion(), '<')) {
-                return $pkg;
-            }
-
-            return $carry;
-        });
+        return $highest;
     }
 
     /**
@@ -70,9 +71,9 @@ class PackageSorter
      * @param  array<string, int> $weights Pre-set weights for some packages to give them more (negative number) or less (positive) weight offsets
      * @return PackageInterface[] sorted array
      */
-    public static function sortPackages(array $packages, array $weights = array()): array
+    public static function sortPackages(array $packages, array $weights = []): array
     {
-        $usageList = array();
+        $usageList = [];
 
         foreach ($packages as $package) {
             $links = $package->getRequires();
@@ -84,8 +85,8 @@ class PackageSorter
                 $usageList[$target][] = $package->getName();
             }
         }
-        $computing = array();
-        $computed = array();
+        $computing = [];
+        $computed = [];
         $computeImportance = static function ($name) use (&$computeImportance, &$computing, &$computed, $usageList, $weights) {
             // reusing computed importance
             if (isset($computed[$name])) {
@@ -112,12 +113,12 @@ class PackageSorter
             return $weight;
         };
 
-        $weightedPackages = array();
+        $weightedPackages = [];
 
         foreach ($packages as $index => $package) {
             $name = $package->getName();
             $weight = $computeImportance($name);
-            $weightedPackages[] = array('name' => $name, 'weight' => $weight, 'index' => $index);
+            $weightedPackages[] = ['name' => $name, 'weight' => $weight, 'index' => $index];
         }
 
         usort($weightedPackages, static function (array $a, array $b): int {
@@ -128,7 +129,7 @@ class PackageSorter
             return strnatcasecmp($a['name'], $b['name']);
         });
 
-        $sortedPackages = array();
+        $sortedPackages = [];
 
         foreach ($weightedPackages as $pkg) {
             $sortedPackages[] = $packages[$pkg['index']];

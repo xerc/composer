@@ -13,7 +13,6 @@
 namespace Composer\Test\Repository\Vcs;
 
 use Composer\Repository\Vcs\GitHubDriver;
-use Composer\Test\Mock\ProcessExecutorMock;
 use Composer\Test\TestCase;
 use Composer\Util\Filesystem;
 use Composer\Config;
@@ -30,11 +29,11 @@ class GitHubDriverTest extends TestCase
     {
         $this->home = self::getUniqueTmpDirectory();
         $this->config = new Config();
-        $this->config->merge(array(
-            'config' => array(
+        $this->config->merge([
+            'config' => [
                 'home' => $this->home,
-            ),
-        ));
+            ],
+        ]);
     }
 
     protected function tearDown(): void
@@ -68,7 +67,7 @@ class GitHubDriverTest extends TestCase
         );
 
         $process = $this->getProcessExecutorMock();
-        $process->expects(array(), false, array('return' => 1));
+        $process->expects([], false, ['return' => 1]);
 
         $io->expects($this->once())
             ->method('askAndHideAnswer')
@@ -84,17 +83,18 @@ class GitHubDriverTest extends TestCase
         $this->config->setConfigSource($configSource);
         $this->config->setAuthConfigSource($authConfigSource);
 
-        $repoConfig = array(
+        $repoConfig = [
             'url' => $repoUrl,
-        );
+        ];
 
         $gitHubDriver = new GitHubDriver($repoConfig, $io, $this->config, $httpDownloader, $process);
         $gitHubDriver->initialize();
-        $this->setAttribute($gitHubDriver, 'tags', array($identifier => $sha));
+        $this->setAttribute($gitHubDriver, 'tags', [$identifier => $sha]);
 
         $this->assertEquals('test_master', $gitHubDriver->getRootIdentifier());
 
         $dist = $gitHubDriver->getDist($sha);
+        self::assertIsArray($dist);
         $this->assertEquals('zip', $dist['type']);
         $this->assertEquals('https://api.github.com/repos/composer/packagist/zipball/SOMESHA', $dist['url']);
         $this->assertEquals('SOMESHA', $dist['reference']);
@@ -125,18 +125,19 @@ class GitHubDriverTest extends TestCase
             true
         );
 
-        $repoConfig = array(
+        $repoConfig = [
             'url' => $repoUrl,
-        );
+        ];
         $repoUrl = 'https://github.com/composer/packagist.git';
 
         $gitHubDriver = new GitHubDriver($repoConfig, $io, $this->config, $httpDownloader, $this->getProcessExecutorMock());
         $gitHubDriver->initialize();
-        $this->setAttribute($gitHubDriver, 'tags', array($identifier => $sha));
+        $this->setAttribute($gitHubDriver, 'tags', [$identifier => $sha]);
 
         $this->assertEquals('test_master', $gitHubDriver->getRootIdentifier());
 
         $dist = $gitHubDriver->getDist($sha);
+        self::assertIsArray($dist);
         $this->assertEquals('zip', $dist['type']);
         $this->assertEquals('https://api.github.com/repos/composer/packagist/zipball/SOMESHA', $dist['url']);
         $this->assertEquals($sha, $dist['reference']);
@@ -170,18 +171,19 @@ class GitHubDriverTest extends TestCase
             true
         );
 
-        $repoConfig = array(
+        $repoConfig = [
             'url' => $repoUrl,
-        );
+        ];
         $repoUrl = 'https://github.com/composer/packagist.git';
 
         $gitHubDriver = new GitHubDriver($repoConfig, $io, $this->config, $httpDownloader, $this->getProcessExecutorMock());
         $gitHubDriver->initialize();
-        $this->setAttribute($gitHubDriver, 'tags', array($identifier => $sha));
+        $this->setAttribute($gitHubDriver, 'tags', [$identifier => $sha]);
 
         $this->assertEquals('test_master', $gitHubDriver->getRootIdentifier());
 
         $dist = $gitHubDriver->getDist($sha);
+        self::assertIsArray($dist);
         $this->assertEquals('zip', $dist['type']);
         $this->assertEquals('https://api.github.com/repos/composer/packagist/zipball/SOMESHA', $dist['url']);
         $this->assertEquals($sha, $dist['reference']);
@@ -195,6 +197,44 @@ class GitHubDriverTest extends TestCase
 
         $this->assertIsArray($data);
         $this->assertArrayNotHasKey('abandoned', $data);
+    }
+
+    public function testInvalidSupportData(): void
+    {
+        $repoUrl = 'http://github.com/composer/packagist';
+        $repoApiUrl = 'https://api.github.com/repos/composer/packagist';
+        $identifier = 'feature/3.2-foo';
+        $sha = 'SOMESHA';
+
+        $io = $this->getMockBuilder('Composer\IO\IOInterface')->getMock();
+        $io->expects($this->any())
+            ->method('isInteractive')
+            ->will($this->returnValue(true));
+
+        $httpDownloader = $this->getHttpDownloaderMock($io, $this->config);
+        $httpDownloader->expects(
+            [
+                ['url' => $repoApiUrl, 'body' => '{"master_branch": "test_master", "owner": {"login": "composer"}, "name": "packagist"}'],
+                ['url' => 'https://api.github.com/repos/composer/packagist/contents/composer.json?ref=feature%2F3.2-foo', 'body' => '{"encoding":"base64","content":"'.base64_encode('{"support": "'.$repoUrl.'" }').'"}'],
+                ['url' => 'https://api.github.com/repos/composer/packagist/commits/feature%2F3.2-foo', 'body' => '{"commit": {"committer":{ "date": "2012-09-10"}}}'],
+                ['url' => 'https://api.github.com/repos/composer/packagist/contents/.github/FUNDING.yml', 'body' => '{"encoding": "base64", "content": "'.base64_encode("custom: https://example.com").'"}'],
+            ],
+            true
+        );
+
+        $repoConfig = [
+            'url' => $repoUrl,
+        ];
+
+        $gitHubDriver = new GitHubDriver($repoConfig, $io, $this->config, $httpDownloader, $this->getProcessExecutorMock());
+        $gitHubDriver->initialize();
+        $this->setAttribute($gitHubDriver, 'tags', [$identifier => $sha]);
+        $this->setAttribute($gitHubDriver, 'branches', ['test_master' => $sha]);
+
+        $data = $gitHubDriver->getComposerInformation($identifier);
+
+        $this->assertIsArray($data);
+        $this->assertSame('https://github.com/composer/packagist/tree/feature/3.2-foo', $data['support']['source']);
     }
 
     public function testPublicRepositoryArchived(): void
@@ -221,13 +261,13 @@ class GitHubDriverTest extends TestCase
             true
         );
 
-        $repoConfig = array(
+        $repoConfig = [
             'url' => $repoUrl,
-        );
+        ];
 
         $gitHubDriver = new GitHubDriver($repoConfig, $io, $this->config, $httpDownloader, $this->getProcessExecutorMock());
         $gitHubDriver->initialize();
-        $this->setAttribute($gitHubDriver, 'tags', array($identifier => $sha));
+        $this->setAttribute($gitHubDriver, 'tags', [$identifier => $sha]);
 
         $data = $gitHubDriver->getComposerInformation($sha);
 
@@ -262,26 +302,26 @@ class GitHubDriverTest extends TestCase
         $this->config->merge(['config' => ['cache-vcs-dir' => sys_get_temp_dir() . '/composer-test/cache']]);
 
         $process = $this->getProcessExecutorMock();
-        $process->expects(array(
-            array('cmd' => 'git config github.accesstoken', 'return' => 1),
+        $process->expects([
+            ['cmd' => 'git config github.accesstoken', 'return' => 1],
             'git clone --mirror -- '.ProcessExecutor::escape($repoSshUrl).' '.ProcessExecutor::escape($this->config->get('cache-vcs-dir').'/git-github.com-composer-packagist.git/'),
-            array(
+            [
                 'cmd' => 'git show-ref --tags --dereference',
                 'stdout' => $sha.' refs/tags/'.$identifier,
-            ),
-            array(
+            ],
+            [
                 'cmd' => 'git branch --no-color --no-abbrev -v',
                 'stdout' => '  test_master     edf93f1fccaebd8764383dc12016d0a1a9672d89 Fix test & behavior',
-            ),
-            array(
+            ],
+            [
                 'cmd' => 'git branch --no-color',
                 'stdout' => '* test_master',
-            ),
-        ), true);
+            ],
+        ], true);
 
-        $repoConfig = array(
+        $repoConfig = [
             'url' => $repoUrl,
-        );
+        ];
 
         $gitHubDriver = new GitHubDriver($repoConfig, $io, $this->config, $httpDownloader, $process);
         $gitHubDriver->initialize();
@@ -289,6 +329,7 @@ class GitHubDriverTest extends TestCase
         $this->assertEquals('test_master', $gitHubDriver->getRootIdentifier());
 
         $dist = $gitHubDriver->getDist($sha);
+        self::assertIsArray($dist);
         $this->assertEquals('zip', $dist['type']);
         $this->assertEquals('https://api.github.com/repos/composer/packagist/zipball/SOMESHA', $dist['url']);
         $this->assertEquals($sha, $dist['reference']);
@@ -305,19 +346,19 @@ class GitHubDriverTest extends TestCase
     }
 
     /**
-     * @return void
+     * @dataProvider invalidUrlProvider
      */
-    public function initializeInvalidReoUrl(): void
+    public function testInitializeInvalidRepoUrl(string $url): void
     {
         $this->expectException('\InvalidArgumentException');
 
-        $repoConfig = array(
-            'url' => 'https://github.com/acme',
-        );
+        $repoConfig = [
+            'url' => $url,
+        ];
 
         $io = $this->getMockBuilder('Composer\IO\IOInterface')->getMock();
         $httpDownloader = $this->getMockBuilder('Composer\Util\HttpDownloader')
-            ->setConstructorArgs(array($io, $this->config))
+            ->setConstructorArgs([$io, $this->config])
             ->getMock();
 
         $gitHubDriver = new GitHubDriver($repoConfig, $io, $this->config, $httpDownloader, $this->getProcessExecutorMock());
@@ -325,9 +366,19 @@ class GitHubDriverTest extends TestCase
     }
 
     /**
+     * @return list<array{string}>
+     */
+    public static function invalidUrlProvider()
+    {
+        return [
+            ['https://github.com/acme'],
+            ['https://github.com/acme/repository/releases'],
+            ['https://github.com/acme/repository/pulls'],
+        ];
+    }
+
+    /**
      * @dataProvider supportsProvider
-     * @param bool $expected
-     * @param string $repoUrl
      */
     public function testSupports(bool $expected, string $repoUrl): void
     {
@@ -339,21 +390,20 @@ class GitHubDriverTest extends TestCase
     /**
      * @return list<array{bool, string}>
      */
-    public function supportsProvider(): array
+    public static function supportsProvider(): array
     {
-        return array(
-            array(false, 'https://github.com/acme'),
-            array(true, 'https://github.com/acme/repository'),
-            array(true, 'git@github.com:acme/repository.git'),
-        );
+        return [
+            [false, 'https://github.com/acme'],
+            [true, 'https://github.com/acme/repository'],
+            [true, 'git@github.com:acme/repository.git'],
+            [false, 'https://github.com/acme/repository/releases'],
+            [false, 'https://github.com/acme/repository/pulls'],
+        ];
     }
 
     /**
      * @param string|object $object
-     * @param string        $attribute
      * @param mixed         $value
-     *
-     * @return void
      */
     protected function setAttribute($object, string $attribute, $value): void
     {
