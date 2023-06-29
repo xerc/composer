@@ -368,7 +368,7 @@ EOT
                 throw new \InvalidArgumentException('Cannot create project directory at "'.$directory.'", it exists as a file.');
             }
             if (!$fs->isDirEmpty($directory)) {
-                throw new \InvalidArgumentException('Project directory "'.$directory.'" is not empty.');
+                #ignore-non-empty-directory;throw new \InvalidArgumentException('Project directory "'.$directory.'" is not empty.');
             }
         }
 

@@ -63,7 +63,7 @@ class ProjectInstaller implements InstallerInterface
     {
         $installPath = $this->installPath;
         if (file_exists($installPath) && !$this->filesystem->isDirEmpty($installPath)) {
-            throw new \InvalidArgumentException("Project directory $installPath is not empty.");
+            #ignore-non-empty-directory;throw new \InvalidArgumentException("Project directory $installPath is not empty.");
         }
         if (!is_dir($installPath)) {
             mkdir($installPath, 0777, true);
