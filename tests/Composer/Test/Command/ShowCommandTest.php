@@ -288,12 +288,19 @@ vendor/package 1.1.0 <highlight>! 1.2.0</highlight>", trim($appTester->getDispla
         unlink('./composer.json');
         unlink('./auth.json');
 
+        // listing packages
         $appTester = $this->getApplicationTester();
         $appTester->run(['command' => 'show', '-p' => true]);
         $output = trim($appTester->getDisplay(true));
         foreach (Regex::matchAll('{^(\w+)}m', $output)->matches as $m) {
             self::assertTrue(PlatformRepository::isPlatformPackage((string) $m[1]));
         }
+
+        // getting a single package
+        $appTester->run(['command' => 'show', '-p' => true, 'package' => 'php']);
+        $appTester->assertCommandIsSuccessful();
+        $appTester->run(['command' => 'show', '-p' => true, '-f' => 'json', 'package' => 'php']);
+        $appTester->assertCommandIsSuccessful();
     }
 
     public function testOutdatedWithZeroMajor(): void
@@ -396,5 +403,46 @@ available:
 
 installed:
   vendor/installed 2.0.0 description of installed package', $output);
+    }
+
+    public function testNameOnlyPrintsNoTrailingWhitespace(): void
+    {
+        $this->initTempComposer([
+            'repositories' => [
+                'packages' => [
+                    'type' => 'package',
+                    'package' => [
+                        // CAUTION: package names matter - output is sorted, and we want shorter before longer ones
+                        ['name' => 'vendor/apackage', 'description' => 'generic description', 'version' => '1.0.0'],
+                        ['name' => 'vendor/apackage', 'description' => 'generic description', 'version' => '1.1.0'],
+                        ['name' => 'vendor/longpackagename', 'description' => 'generic description', 'version' => '1.0.0'],
+                        ['name' => 'vendor/longpackagename', 'description' => 'generic description', 'version' => '1.1.0'],
+                        ['name' => 'vendor/somepackage', 'description' => 'generic description', 'version' => '1.0.0'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->createInstalledJson([
+            self::getPackage('vendor/apackage', '1.0.0'),
+            self::getPackage('vendor/longpackagename', '1.0.0'),
+            self::getPackage('vendor/somepackage', '1.0.0'),
+        ]);
+
+        $appTester = $this->getApplicationTester();
+        $appTester->run(['command' => 'show', '-N' => true]);
+        self::assertSame(
+'vendor/apackage
+vendor/longpackagename
+vendor/somepackage', trim($appTester->getDisplay(true))); // trim() is fine here, but see CAUTION above
+
+        $appTester = $this->getApplicationTester();
+        $appTester->run(['command' => 'show', '--outdated' => true, '-N' => true]);
+        self::assertSame(
+'Legend:
+! patch or minor release available - update recommended
+~ major release available - update possible
+vendor/apackage
+vendor/longpackagename', trim($appTester->getDisplay(true))); // trim() is fine here, but see CAUTION above
     }
 }

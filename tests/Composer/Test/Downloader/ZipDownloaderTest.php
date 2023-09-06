@@ -65,11 +65,7 @@ class ZipDownloaderTest extends TestCase
         $reflectionClass = new \ReflectionClass('Composer\Downloader\ZipDownloader');
         $reflectedProperty = $reflectionClass->getProperty($name);
         $reflectedProperty->setAccessible(true);
-        if ($obj === null) {
-            $reflectedProperty->setValue($value);
-        } else {
-            $reflectedProperty->setValue($obj, $value);
-        }
+        $reflectedProperty->setValue($obj, $value);
     }
 
     public function testErrorMessages(): void
@@ -314,7 +310,7 @@ class ZipDownloaderTest extends TestCase
     }
 
     /**
-     * @param ?\React\Promise\PromiseInterface $promise
+     * @param ?\React\Promise\PromiseInterface<mixed> $promise
      */
     private function wait($promise): void
     {
@@ -329,7 +325,7 @@ class ZipDownloaderTest extends TestCase
             $e = $ex;
         });
 
-        if ($e) {
+        if ($e !== null) {
             throw $e;
         }
     }

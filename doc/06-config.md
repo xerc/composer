@@ -101,6 +101,40 @@ optionally be an object with package name patterns for keys for more granular in
 > configuration in global and package configurations the string notation
 > is translated to a `*` package pattern.
 
+## audit
+
+Security audit configuration options
+
+### ignore
+
+A list of advisory ids, remote ids or CVE ids that are reported but let the audit command pass.
+
+```json
+{
+    "config": {
+        "audit": {
+            "ignore": {
+                "CVE-1234": "The affected component is not in use.",
+                "GHSA-xx": "The security fix was applied as a patch.",
+                "PKSA-yy": "Due to mitigations in place the update can be delayed."
+            }
+        }
+    }
+}
+```
+
+or
+
+```json
+{
+    "config": {
+        "audit": {
+            "ignore": ["CVE-1234", "GHSA-xx", "PKSA-yy"]
+        }
+    }
+}
+```
+
 ## use-parent-dir
 
 When running Composer in a directory where there is no composer.json, if there

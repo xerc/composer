@@ -74,7 +74,7 @@ php composer.phar init
 * **--repository:** Provide one (or more) custom repositories. They will be stored
   in the generated composer.json, and used for auto-completion when prompting for
   the list of requires. Every repository can be either an HTTP URL pointing
-  to a `composer` repository or a JSON string which similar to what the
+  to a `composer` repository or a JSON string which is similar to what the
   [repositories](04-schema.md#repositories) key accepts.
 * **--autoload (-a):** Add a PSR-4 autoload mapping to the composer.json. Automatically maps your package's namespace to the provided directory. (Expects a relative path, e.g. src/) See also [PSR-4 autoload](04-schema.md#psr-4).
 
@@ -968,7 +968,7 @@ performance.
 * **--ignore-platform-req:** ignore a specific platform requirement (`php`, `hhvm`,
   `lib-*` and `ext-*`) and skip the [platform check](07-runtime.md#platform-check) for it.
   Multiple requirements can be ignored via wildcard.
-* **--strict-psr:** Return a failed status code (1) if PSR-4 or PSR-0 mapping errors
+* **--strict-psr:** Return a failed exit code (1) if PSR-4 or PSR-0 mapping errors
   are present. Requires --optimize to work.
 
 ## clear-cache / clearcache / cc

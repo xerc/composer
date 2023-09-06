@@ -6,6 +6,11 @@ parameters:
 			path: ../src/Composer/Advisory/Auditor.php
 
 		-
+			message: "#^Variable \\$affectedPackagesCount might not be defined\\.$#"
+			count: 1
+			path: ../src/Composer/Advisory/Auditor.php
+
+		-
 			message: "#^Construct empty\\(\\) is not allowed\\. Use more strict comparison\\.$#"
 			count: 10
 			path: ../src/Composer/Autoload/AutoloadGenerator.php
@@ -646,23 +651,8 @@ parameters:
 			path: ../src/Composer/Command/ShowCommand.php
 
 		-
-			message: "#^Cannot call method getId\\(\\) on Composer\\\\Package\\\\BasePackage\\|int\\.$#"
-			count: 1
-			path: ../src/Composer/Command/ShowCommand.php
-
-		-
 			message: "#^Cannot call method getInstallationManager\\(\\) on Composer\\\\Composer\\|null\\.$#"
 			count: 2
-			path: ../src/Composer/Command/ShowCommand.php
-
-		-
-			message: "#^Cannot call method getPrettyVersion\\(\\) on Composer\\\\Package\\\\BasePackage\\|int\\.$#"
-			count: 1
-			path: ../src/Composer/Command/ShowCommand.php
-
-		-
-			message: "#^Cannot call method getVersion\\(\\) on Composer\\\\Package\\\\BasePackage\\|int\\.$#"
-			count: 1
 			path: ../src/Composer/Command/ShowCommand.php
 
 		-
@@ -672,11 +662,6 @@ parameters:
 
 		-
 			message: "#^Method Composer\\\\Command\\\\ShowCommand\\:\\:addTree\\(\\) should return array\\<int, array\\<string, array\\<int, array\\<string, string\\>\\>\\|string\\>\\> but returns array\\<int, array\\<string, array\\<int, array\\<string, array\\<int, array\\<string, string\\>\\>\\|string\\>\\>\\|string\\>\\>\\.$#"
-			count: 1
-			path: ../src/Composer/Command/ShowCommand.php
-
-		-
-			message: "#^Method Composer\\\\Command\\\\ShowCommand\\:\\:getPackage\\(\\) should return array\\{Composer\\\\Package\\\\CompletePackageInterface\\|null, array\\<string, string\\>\\} but returns array\\{Composer\\\\Package\\\\BasePackage\\|int\\|null, array\\<string, string\\>\\}\\.$#"
 			count: 1
 			path: ../src/Composer/Command/ShowCommand.php
 
@@ -718,11 +703,6 @@ parameters:
 		-
 			message: "#^Only booleans are allowed in a negated boolean, Composer\\\\Composer\\|null given\\.$#"
 			count: 2
-			path: ../src/Composer/Command/ShowCommand.php
-
-		-
-			message: "#^Only booleans are allowed in a negated boolean, Composer\\\\Package\\\\BasePackage\\|int\\|null given\\.$#"
-			count: 1
 			path: ../src/Composer/Command/ShowCommand.php
 
 		-
@@ -803,11 +783,6 @@ parameters:
 		-
 			message: "#^Parameter \\#1 \\$arrayTree of method Composer\\\\Command\\\\ShowCommand\\:\\:displayPackageTree\\(\\) expects array\\<int, array\\<string, array\\|string\\>\\>, array\\<int, array\\<string, array\\<int, array\\<string, array\\|string\\>\\>\\|string\\|null\\>\\> given\\.$#"
 			count: 2
-			path: ../src/Composer/Command/ShowCommand.php
-
-		-
-			message: "#^Parameter \\#1 \\$package of method Composer\\\\Repository\\\\CompositeRepository\\:\\:hasPackage\\(\\) expects Composer\\\\Package\\\\PackageInterface, Composer\\\\Package\\\\BasePackage\\|int given\\.$#"
-			count: 1
 			path: ../src/Composer/Command/ShowCommand.php
 
 		-
@@ -1696,6 +1671,11 @@ parameters:
 			path: ../src/Composer/Downloader/FileDownloader.php
 
 		-
+			message: "#^Strict comparison using \\=\\=\\= between null and Composer\\\\Util\\\\Http\\\\Response will always evaluate to false\\.$#"
+			count: 1
+			path: ../src/Composer/Downloader/FileDownloader.php
+
+		-
 			message: "#^Parameter \\#3 \\$cwd of method Composer\\\\Util\\\\ProcessExecutor\\:\\:execute\\(\\) expects string\\|null, string\\|false given\\.$#"
 			count: 5
 			path: ../src/Composer/Downloader/FossilDownloader.php
@@ -1931,32 +1911,7 @@ parameters:
 			path: ../src/Composer/Downloader/VcsDownloader.php
 
 		-
-			message: "#^Parameter \\#1 \\$haystack of function strpos expects string, string\\|false given\\.$#"
-			count: 2
-			path: ../src/Composer/Downloader/VcsDownloader.php
-
-		-
 			message: "#^Parameter \\#1 \\$package of method Composer\\\\Downloader\\\\VcsDownloader\\:\\:cleanChanges\\(\\) expects Composer\\\\Package\\\\PackageInterface, Composer\\\\Package\\\\PackageInterface\\|null given\\.$#"
-			count: 1
-			path: ../src/Composer/Downloader/VcsDownloader.php
-
-		-
-			message: "#^Parameter \\#1 \\$path of function realpath expects string, string\\|false given\\.$#"
-			count: 1
-			path: ../src/Composer/Downloader/VcsDownloader.php
-
-		-
-			message: "#^Parameter \\#1 \\$path of static method Composer\\\\Util\\\\Filesystem\\:\\:isLocalPath\\(\\) expects string, string\\|false given\\.$#"
-			count: 1
-			path: ../src/Composer/Downloader/VcsDownloader.php
-
-		-
-			message: "#^Parameter \\#1 \\$str of function rawurldecode expects string, string\\|false given\\.$#"
-			count: 1
-			path: ../src/Composer/Downloader/VcsDownloader.php
-
-		-
-			message: "#^Parameter \\#1 \\$string of function substr expects string, string\\|false given\\.$#"
 			count: 1
 			path: ../src/Composer/Downloader/VcsDownloader.php
 
@@ -2361,11 +2316,6 @@ parameters:
 			path: ../src/Composer/Installer/InstallationManager.php
 
 		-
-			message: "#^Only booleans are allowed in an if condition, React\\\\Promise\\\\PromiseInterface\\|null given\\.$#"
-			count: 1
-			path: ../src/Composer/Installer/InstallationManager.php
-
-		-
 			message: "#^Only booleans are allowed in an if condition, Symfony\\\\Component\\\\Console\\\\Helper\\\\ProgressBar\\|null given\\.$#"
 			count: 1
 			path: ../src/Composer/Installer/InstallationManager.php
@@ -2499,11 +2449,6 @@ parameters:
 			message: "#^Only booleans are allowed in an if condition, int\\<0, 4\\> given\\.$#"
 			count: 1
 			path: ../src/Composer/Installer/SuggestedPackagesReporter.php
-
-		-
-			message: "#^Method Composer\\\\Json\\\\JsonFile\\:\\:encode\\(\\) should return string but returns string\\|false\\.$#"
-			count: 1
-			path: ../src/Composer/Json/JsonFile.php
 
 		-
 			message: "#^Only booleans are allowed in &&, Composer\\\\IO\\\\IOInterface\\|null given on the left side\\.$#"
@@ -3635,7 +3580,7 @@ parameters:
 
 		-
 			message: "#^Construct empty\\(\\) is not allowed\\. Use more strict comparison\\.$#"
-			count: 6
+			count: 5
 			path: ../src/Composer/Repository/Vcs/GitHubDriver.php
 
 		-
@@ -3670,7 +3615,7 @@ parameters:
 
 		-
 			message: "#^Only booleans are allowed in a negated boolean, string given\\.$#"
-			count: 2
+			count: 1
 			path: ../src/Composer/Repository/Vcs/GitHubDriver.php
 
 		-
