@@ -13,6 +13,7 @@
 namespace Composer\Test\Command;
 
 use Composer\Test\TestCase;
+use InvalidArgumentException;
 
 class UpdateCommandTest extends TestCase
 {
@@ -28,7 +29,7 @@ class UpdateCommandTest extends TestCase
         $appTester = $this->getApplicationTester();
         $appTester->run(array_merge(['command' => 'update', '--dry-run' => true, '--no-audit' => true], $command));
 
-        $this->assertSame(trim($expected), trim($appTester->getDisplay(true)));
+        $this->assertStringMatchesFormat(trim($expected), trim($appTester->getDisplay(true)));
     }
 
     public static function provideUpdates(): \Generator
@@ -66,6 +67,29 @@ Package operations: 2 installs, 0 updates, 0 removals
 OUTPUT
         ];
 
+        yield 'simple update with very verbose output' => [
+            $rootDepAndTransitiveDep,
+            ['-vv' => true],
+            <<<OUTPUT
+Loading composer repositories with package information
+Pool optimizer completed in %f seconds
+Found %d package versions referenced in your dependency graph. %d (%d%%) were optimized away.
+Updating dependencies
+Dependency resolution completed in %f seconds
+Analyzed %d packages to resolve dependencies
+Analyzed %d rules to resolve dependencies
+Lock file operations: 2 installs, 0 updates, 0 removals
+Installs: dep/pkg:1.0.2, root/req:1.0.0
+  - Locking dep/pkg (1.0.2) from package repo (defining 4 packages)
+  - Locking root/req (1.0.0) from package repo (defining 4 packages)
+Installing dependencies from lock file (including require-dev)
+Package operations: 2 installs, 0 updates, 0 removals
+Installs: dep/pkg:1.0.2, root/req:1.0.0
+  - Installing dep/pkg (1.0.2)
+  - Installing root/req (1.0.0)
+OUTPUT
+        ];
+
         yield 'update with temporary constraint + --no-install' => [
             $rootDepAndTransitiveDep,
             ['--with' => ['dep/pkg:1.0.0'], '--no-install' => true],
@@ -91,5 +115,24 @@ Your requirements could not be resolved to an installable set of packages.
     - root/req 1.0.0 requires dep/pkg ^1 -> found dep/pkg[1.0.0, 1.0.1, 1.0.2] but it conflicts with your temporary update constraint (dep/pkg:^2).
 OUTPUT
         ];
+
+        yield 'update with temporary constraint failing resolution on root package' => [
+            $rootDepAndTransitiveDep,
+            ['--with' => ['root/req:^2']],
+            <<<OUTPUT
+The temporary constraint "^2" for "root/req" must be a subset of the constraint in your composer.json (1.*)
+Run `composer require root/req` or `composer require root/req:^2` instead to replace the constraint
+OUTPUT
+        ];
+    }
+
+    public function testInteractiveModeThrowsIfNoPackageEntered(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('You must enter minimum one package.');
+
+        $appTester = $this->getApplicationTester();
+        $appTester->setInputs(['']);
+        $appTester->run(['command' => 'update', '--interactive' => true]);
     }
 }

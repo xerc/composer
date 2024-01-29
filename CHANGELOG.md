@@ -1,3 +1,31 @@
+### [2.6.6] 2023-12-08
+
+  * Fixed symfony/console requirement to exclude 7.x as Composer 2.6 is not compatible, 2.7 will be (#11741)
+  * Fixed libpq parsing to use the global constant if available (#11684)
+  * Fixed error output when updating with a temporary constraint fails (#11692)
+
+### [2.6.5] 2023-10-06
+
+  * Fixed error when vendor dir contains broken symlinks (#11670)
+  * Fixed composer.lock missing from Composer's zip archives (#11674)
+  * Fixed AutoloadGenerator::dump() non-BC signature change in 2.6.4 (cb363b0e8)
+
+### [2.6.4] 2023-09-29
+
+  * Security: Fixed possible remote code execution vulnerability if composer.phar is publicly accessible, executable as PHP, and register_argc_argv is enabled in php.ini (GHSA-jm6m-4632-36hf / CVE-2023-43655)
+  * Fixed json output of abandoned packages in audit command (#11647)
+  * Performance improvement in pool optimization step (#11638)
+  * Performance improvement in `show -a <packagename>` (#11659)
+
+### [2.6.3] 2023-09-15
+
+  * Added audit.abandoned config setting. Can be set to `ignore`, `report` (current default) or `fail` (future default in 2.7) to make the audit command report abandoned packages as a security problem (#11639)
+  * Added a warning when duplicates `files` autoload rules are detected (#11109)
+  * Fixed unhandled promise rejection regression (#11620)
+  * Fixed loading of root aliases on path repo packages when doing partial updates (#11632)
+  * Fixed `archive` command not producing the correct output if the temp dir is a symlink (#11636)
+  * Fixed some replaced packages being incorrectly missing when unlocked in a partial update (#11629)
+
 ### [2.6.2] 2023-09-03
 
   * Reverted "Fixed binary proxies causing scripts inspecting `$_SERVER['SCRIPT_NAME']` to detect them, they are now more transparent (#11562)" which caused a regression (#11617)
@@ -1767,6 +1795,10 @@
 
   * Initial release
 
+[2.6.6]: https://github.com/composer/composer/compare/2.6.5...2.6.6
+[2.6.5]: https://github.com/composer/composer/compare/2.6.4...2.6.5
+[2.6.4]: https://github.com/composer/composer/compare/2.6.3...2.6.4
+[2.6.3]: https://github.com/composer/composer/compare/2.6.2...2.6.3
 [2.6.2]: https://github.com/composer/composer/compare/2.6.1...2.6.2
 [2.6.1]: https://github.com/composer/composer/compare/2.6.0...2.6.1
 [2.6.0]: https://github.com/composer/composer/compare/2.5.8...2.6.0

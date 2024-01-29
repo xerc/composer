@@ -365,7 +365,9 @@ class Application extends BaseApplication
                                     $description = $composer['scripts-descriptions'][$script];
                                 }
 
-                                $this->add(new Command\ScriptAliasCommand($script, $description));
+                                $aliases = $composer['scripts-aliases'][$script] ?? [];
+
+                                $this->add(new Command\ScriptAliasCommand($script, $description, $aliases));
                             }
                         }
                     }
@@ -655,6 +657,16 @@ class Application extends BaseApplication
     public function getInitialWorkingDirectory()
     {
         return $this->initialWorkingDirectory;
+    }
+
+    public function getDisablePluginsByDefault(): bool
+    {
+        return $this->disablePluginsByDefault;
+    }
+
+    public function getDisableScriptsByDefault(): bool
+    {
+        return $this->disableScriptsByDefault;
     }
 
     /**

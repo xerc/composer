@@ -45,7 +45,7 @@
         "seld/signal-handler": "^2.0"
     },
     "require-dev": {
-        "symfony/phpunit-bridge": "^6.0 || ^7",
+        "symfony/phpunit-bridge": "^6.4.1 || ^7.0.1",
         "phpstan/phpstan": "^1.9.3",
         "phpstan/phpstan-phpunit": "^1.0",
         "phpstan/phpstan-deprecation-rules": "^1",
@@ -65,7 +65,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "2.6-dev"
+            "dev-main": "2.7-dev"
         },
         "phpstan": {
             "includes": [

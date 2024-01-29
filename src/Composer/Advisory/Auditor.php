@@ -15,8 +15,10 @@ namespace Composer\Advisory;
 use Composer\IO\ConsoleIO;
 use Composer\IO\IOInterface;
 use Composer\Json\JsonFile;
+use Composer\Package\CompletePackageInterface;
 use Composer\Package\PackageInterface;
 use Composer\Repository\RepositorySet;
+use Composer\Util\PackageInfo;
 use InvalidArgumentException;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
@@ -40,16 +42,21 @@ class Auditor
         self::FORMAT_SUMMARY,
     ];
 
+    public const ABANDONED_IGNORE = 'ignore';
+    public const ABANDONED_REPORT = 'report';
+    public const ABANDONED_FAIL = 'fail';
+
     /**
      * @param PackageInterface[] $packages
      * @param self::FORMAT_* $format The format that will be used to output audit results.
      * @param bool $warningOnly If true, outputs a warning. If false, outputs an error.
      * @param string[] $ignoreList List of advisory IDs, remote IDs or CVE IDs that reported but not listed as vulnerabilities.
+     * @param self::ABANDONED_* $abandoned
      *
      * @return int Amount of packages with vulnerabilities found
      * @throws InvalidArgumentException If no packages are passed in
      */
-    public function audit(IOInterface $io, RepositorySet $repoSet, array $packages, string $format, bool $warningOnly = true, array $ignoreList = []): int
+    public function audit(IOInterface $io, RepositorySet $repoSet, array $packages, string $format, bool $warningOnly = true, array $ignoreList = [], string $abandoned = self::ABANDONED_FAIL): int
     {
         $allAdvisories = $repoSet->getMatchingSecurityAdvisories($packages, $format === self::FORMAT_SUMMARY);
         // we need the CVE & remote IDs set to filter ignores correctly so if we have any matches using the optimized codepath above
@@ -59,15 +66,30 @@ class Auditor
         }
         ['advisories' => $advisories, 'ignoredAdvisories' => $ignoredAdvisories] = $this->processAdvisories($allAdvisories, $ignoreList);
 
+        $abandonedCount = 0;
+        $affectedPackagesCount = 0;
+        if ($abandoned === self::ABANDONED_IGNORE) {
+            $abandonedPackages = [];
+        } else {
+            $abandonedPackages = $this->filterAbandonedPackages($packages);
+            if ($abandoned === self::ABANDONED_FAIL) {
+                $abandonedCount = count($abandonedPackages);
+            }
+        }
+
         if (self::FORMAT_JSON === $format) {
             $json = ['advisories' => $advisories];
             if ($ignoredAdvisories !== []) {
                 $json['ignored-advisories'] = $ignoredAdvisories;
             }
+            $json['abandoned'] = array_reduce($abandonedPackages, static function(array $carry, CompletePackageInterface $package): array {
+                $carry[$package->getPrettyName()] = $package->getReplacementPackage();
+                return $carry;
+            }, []);
 
             $io->write(JsonFile::encode($json));
 
-            return count($advisories);
+            return count($advisories) + $abandonedCount;
         }
 
         $errorOrWarn = $warningOnly ? 'warning' : 'error';
@@ -91,13 +113,26 @@ class Auditor
             if ($format === self::FORMAT_SUMMARY) {
                 $io->writeError('Run "composer audit" for a full list of advisories.');
             }
-
-            return $affectedPackagesCount;
+        } else {
+            $io->writeError('<info>No security vulnerability advisories found.</info>');
         }
 
-        $io->writeError('<info>No security vulnerability advisories found</info>');
+        if (count($abandonedPackages) > 0 && $format !== self::FORMAT_SUMMARY) {
+            $this->outputAbandonedPackages($io, $abandonedPackages, $format);
+        }
 
-        return 0;
+        return $affectedPackagesCount + $abandonedCount;
+    }
+
+    /**
+     * @param array<PackageInterface> $packages
+     * @return array<CompletePackageInterface>
+     */
+    private function filterAbandonedPackages(array $packages): array
+    {
+        return array_filter($packages, static function (PackageInterface $pkg) {
+            return $pkg instanceof CompletePackageInterface && $pkg->isAbandoned();
+        });
     }
 
     /**
@@ -212,6 +247,7 @@ class Auditor
             foreach ($packageAdvisories as $advisory) {
                 $headers = [
                     'Package',
+                    'Severity',
                     'CVE',
                     'Title',
                     'URL',
@@ -220,6 +256,7 @@ class Auditor
                 ];
                 $row = [
                     $advisory->packageName,
+                    $this->getSeverity($advisory),
                     $this->getCVE($advisory),
                     $advisory->title,
                     $this->getURL($advisory),
@@ -254,6 +291,7 @@ class Auditor
                     $error[] = '--------';
                 }
                 $error[] = "Package: ".$advisory->packageName;
+                $error[] = "Severity: ".$this->getSeverity($advisory);
                 $error[] = "CVE: ".$this->getCVE($advisory);
                 $error[] = "Title: ".OutputFormatter::escape($advisory->title);
                 $error[] = "URL: ".$this->getURL($advisory);
@@ -266,6 +304,62 @@ class Auditor
             }
         }
         $io->writeError($error);
+    }
+
+    /**
+     * @param array<CompletePackageInterface> $packages
+     * @param self::FORMAT_PLAIN|self::FORMAT_TABLE $format
+     */
+    private function outputAbandonedPackages(IOInterface $io, array $packages, string $format): void
+    {
+        $io->writeError(sprintf('<error>Found %d abandoned package%s:</error>', count($packages), count($packages) > 1 ? 's' : ''));
+
+        if ($format === self::FORMAT_PLAIN) {
+            foreach ($packages as $pkg) {
+                $replacement = $pkg->getReplacementPackage() !== null
+                    ? 'Use '.$pkg->getReplacementPackage().' instead'
+                    : 'No replacement was suggested';
+                $io->writeError(sprintf(
+                    '%s is abandoned. %s.',
+                    $this->getPackageNameWithLink($pkg),
+                    $replacement
+                ));
+            }
+
+            return;
+        }
+
+        if (!($io instanceof ConsoleIO)) {
+            throw new InvalidArgumentException('Cannot use table format with ' . get_class($io));
+        }
+
+        $table = $io->getTable()
+            ->setHeaders(['Abandoned Package', 'Suggested Replacement'])
+            ->setColumnWidth(1, 80)
+            ->setColumnMaxWidth(1, 80);
+
+        foreach ($packages as $pkg) {
+            $replacement = $pkg->getReplacementPackage() !== null ? $pkg->getReplacementPackage() : 'none';
+            $table->addRow([$this->getPackageNameWithLink($pkg), $replacement]);
+        }
+
+        $table->render();
+    }
+
+    private function getPackageNameWithLink(PackageInterface $package): string
+    {
+        $packageUrl = PackageInfo::getViewSourceOrHomepageUrl($package);
+
+        return $packageUrl !== null ? '<href=' . OutputFormatter::escape($packageUrl) . '>' . $package->getPrettyName() . '</>' : $package->getPrettyName();
+    }
+
+    private function getSeverity(SecurityAdvisory $advisory): string
+    {
+        if ($advisory->severity === null) {
+            return '';
+        }
+
+        return $advisory->severity;
     }
 
     private function getCVE(SecurityAdvisory $advisory): string

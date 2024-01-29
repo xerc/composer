@@ -198,8 +198,9 @@ php composer.phar update vendor/package:2.0.1 vendor/package2:3.0.*
 * **--no-install:** Does not run the install step after updating the composer.lock file.
 * **--no-audit:** Does not run the audit steps after updating the composer.lock file. Also see [COMPOSER_NO_AUDIT](#composer-no-audit).
 * **--audit-format:** Audit output format. Must be "table", "plain", "json", or "summary" (default).
-* **--lock:** Only updates the lock file hash to suppress warning about the
-  lock file being out of date.
+* **--lock:** Overwrites the lock file hash to suppress warning about the lock file being out of
+  date without updating package versions. Package metadata like mirrors and URLs are updated if
+  they changed.
 * **--with:** Temporary version constraint to add, e.g. foo/bar:1.0.0 or foo/bar=1.0.0
 * **--no-autoloader:** Skips autoloader generation.
 * **--no-progress:** Removes the progress display that can mess with some
@@ -229,6 +230,8 @@ php composer.phar update vendor/package:2.0.1 vendor/package2:3.0.*
 * **--prefer-lowest:** Prefer lowest versions of dependencies. Useful for testing minimal
   versions of requirements, generally used with `--prefer-stable`. Can also be set via the
   COMPOSER_PREFER_LOWEST=1 env var.
+* **--minimal-changes:** During a partial update with `-w`/`-W`, only perform absolutely necessary
+  changes to transitive dependencies. Can also be set via the COMPOSER_MINIMAL_CHANGES=1 env var.
 * **--interactive:** Interactive interface with autocompletion to select the packages to update.
 * **--root-reqs:** Restricts the update to your first degree dependencies.
 
@@ -288,6 +291,8 @@ If you do not specify a package, Composer will prompt you to search for a packag
 * **--prefer-lowest:** Prefer lowest versions of dependencies. Useful for testing minimal
   versions of requirements, generally used with `--prefer-stable`. Can also be set via the
   COMPOSER_PREFER_LOWEST=1 env var.
+* **--minimal-changes:** During an update with `-w`/`-W`, only perform absolutely necessary
+  changes to transitive dependencies. Can also be set via the COMPOSER_MINIMAL_CHANGES=1 env var.
 * **--sort-packages:** Keep packages sorted in `composer.json`.
 * **--optimize-autoloader (-o):** Convert PSR-0/4 autoloading to classmap to
   get a faster autoloader. This is recommended especially for production, but
@@ -326,6 +331,8 @@ uninstalled.
   (Deprecated, is now default behavior)
 * **--update-with-all-dependencies (-W):** Allows all inherited dependencies to be updated,
   including those that are root requirements.
+* **--minimal-changes:** During an update with `-w`/`-W`, only perform absolutely necessary
+  changes to transitive dependencies. Can also be set via the COMPOSER_MINIMAL_CHANGES=1 env var.
 * **--ignore-platform-reqs:** ignore all platform requirements (`php`, `hhvm`,
   `lib-*` and `ext-*`) and force the installation even if the local machine does
   not fulfill these.
@@ -550,6 +557,7 @@ php composer.phar show monolog/monolog 1.0.2
 * **--major-only (-M):** Use with --latest or --outdated. Only shows packages that have major SemVer-compatible updates.
 * **--minor-only (-m):** Use with --latest or --outdated. Only shows packages that have minor SemVer-compatible updates.
 * **--patch-only:** Use with --latest or --outdated. Only shows packages that have patch-level SemVer-compatible updates.
+* **--sort-by-age (-A):** Displays the installed version's age, and sorts packages oldest first. Use with the --latest or --outdated option.
 * **--direct (-D):** Restricts the list of packages to your direct dependencies.
 * **--strict:** Return a non-zero exit code when there are outdated packages.
 * **--format (-f):** Lets you pick between text (default) or json output format.
@@ -583,6 +591,7 @@ The color coding is as such:
 * **--major-only (-M):** Only shows packages that have major SemVer-compatible updates.
 * **--minor-only (-m):** Only shows packages that have minor SemVer-compatible updates.
 * **--patch-only (-p):** Only shows packages that have patch-level SemVer-compatible updates.
+* **--sort-by-age (-A):** Displays the installed version's age, and sorts packages oldest first.
 * **--format (-f):** Lets you pick between text (default) or json output format.
 * **--no-dev:** Do not show outdated dev dependencies.
 * **--locked:** Shows updates for packages from the lock file, regardless of what is currently in vendor dir.
@@ -1137,6 +1146,10 @@ If set to 1, this env suppresses a warning when Composer is running with the Xde
 
 This env var controls the [`discard-changes`](06-config.md#discard-changes) config option.
 
+### COMPOSER_FUND
+
+If set to 0, this env suppresses funding notices when installing.
+
 ### COMPOSER_HOME
 
 The `COMPOSER_HOME` var allows you to change the Composer home directory. This
@@ -1231,6 +1244,11 @@ defaults to 12 and must be between 1 and 50. If your proxy has issues with
 concurrency maybe you want to lower this. Increasing it should generally not result
 in performance gains.
 
+### COMPOSER_IPRESOLVE
+
+Set to `4` or `6` to force IPv4 or IPv6 DNS resolution. This only works when the
+curl extension is used for downloads.
+
 ### HTTP_PROXY_REQUEST_FULLURI
 
 If you use a proxy, but it does not support the request_fulluri flag, then you
@@ -1289,6 +1307,11 @@ If set to `1`, it is the equivalent of passing the `--prefer-stable` option to
 
 If set to `1`, it is the equivalent of passing the `--prefer-lowest` option to
 `update` or `require`.
+
+### COMPOSER_MINIMAL_CHANGES
+
+If set to `1`, it is the equivalent of passing the `--minimal-changes` option to
+`update`, `require` or `remove`.
 
 ### COMPOSER_IGNORE_PLATFORM_REQ or COMPOSER_IGNORE_PLATFORM_REQS
 

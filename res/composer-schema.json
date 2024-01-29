@@ -346,6 +346,10 @@
                                     }
                                 }
                             ]
+                        },
+                        "abandoned": {
+                            "enum": ["ignore", "report", "fail"],
+                            "description": "Whether abandoned packages should be ignored, reported as problems or cause an audit failure."
                         }
                     }
                 },
@@ -689,6 +693,13 @@
             "description": "Descriptions for custom commands, shown in console help.",
             "additionalProperties": {
                 "type": "string"
+            }
+        },
+        "scripts-aliases": {
+            "type": ["object"],
+            "description": "Aliases for custom commands.",
+            "additionalProperties": {
+                "type": "array"
             }
         }
     },
