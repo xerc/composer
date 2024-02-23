@@ -426,6 +426,12 @@ class ValidatingArrayLoaderTest extends TestCase
                 ],
                 ['replace.0 : invalid version constraint (Could not parse version constraint acme/bar: Invalid version string "acme/bar")'],
             ],
+            [
+                [
+                    'require' => ['acme/bar' => '^1.0']
+                ],
+                ['name : must be present'],
+            ]
         ]);
     }
 
@@ -477,6 +483,20 @@ class ValidatingArrayLoaderTest extends TestCase
                     'require.bar/baz : unbound version constraints (>=1.0) should be avoided',
                     'require.bar/hacked : unbound version constraints (@stable) should be avoided',
                     'require.bar/woo : exact version constraints (1.0.0) should be avoided if the package follows semantic versioning',
+                ],
+                false,
+            ],
+            [
+                [
+                    'name' => 'foo/bar',
+                    'require' => [
+                        'foo/baz' => '>1, <0.5',
+                        'bar/baz' => 'dev-main, >0.5',
+                    ],
+                ],
+                [
+                    'require.foo/baz : this version constraint cannot possibly match anything (>1, <0.5)',
+                    'require.bar/baz : this version constraint cannot possibly match anything (dev-main, >0.5)',
                 ],
                 false,
             ],

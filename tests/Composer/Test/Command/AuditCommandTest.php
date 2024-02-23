@@ -41,4 +41,36 @@ class AuditCommandTest extends TestCase
         $appTester = $this->getApplicationTester();
         $appTester->run(['command' => 'audit', '--locked' => true]);
     }
+
+    public function testAuditPackageWithNoSecurityVulnerabilities(): void
+    {
+        $this->initTempComposer();
+        $packages = [self::getPackage()];
+        $this->createInstalledJson($packages);
+        $this->createComposerLock($packages);
+
+        $appTester = $this->getApplicationTester();
+        $appTester->run(['command' => 'audit', '--locked' => true]);
+
+        self::assertStringContainsString(
+            'No security vulnerability advisories found.',
+            trim($appTester->getDisplay(true))
+        );
+    }
+
+    public function testAuditPackageWithNoDevOptionPassed(): void
+    {
+        $this->initTempComposer();
+        $devPackage = [self::getPackage()];
+        $this->createInstalledJson([], $devPackage);
+        $this->createComposerLock([], $devPackage);
+
+        $appTester = $this->getApplicationTester();
+        $appTester->run(['command' => 'audit', '--no-dev' => true]);
+
+        self::assertStringContainsString(
+            'No packages - skipping audit.',
+            trim($appTester->getDisplay(true))
+        );
+    }
 }

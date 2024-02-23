@@ -230,7 +230,7 @@ php composer.phar update vendor/package:2.0.1 vendor/package2:3.0.*
 * **--prefer-lowest:** Prefer lowest versions of dependencies. Useful for testing minimal
   versions of requirements, generally used with `--prefer-stable`. Can also be set via the
   COMPOSER_PREFER_LOWEST=1 env var.
-* **--minimal-changes:** During a partial update with `-w`/`-W`, only perform absolutely necessary
+* **--minimal-changes (-m):** During a partial update with `-w`/`-W`, only perform absolutely necessary
   changes to transitive dependencies. Can also be set via the COMPOSER_MINIMAL_CHANGES=1 env var.
 * **--interactive:** Interactive interface with autocompletion to select the packages to update.
 * **--root-reqs:** Restricts the update to your first degree dependencies.
@@ -241,6 +241,9 @@ Specifying one of the words `mirrors`, `lock`, or `nothing` as an argument has t
 
 The `require` command adds new packages to the `composer.json` file from
 the current directory. If no file exists one will be created on the fly.
+
+If you do not specify a package, Composer will prompt you to search for a package, and given
+results, provide a list of matches to require.
 
 ```shell
 php composer.phar require
@@ -256,7 +259,14 @@ to the command.
 php composer.phar require "vendor/package:2.*" vendor/package2:dev-master
 ```
 
-If you do not specify a package, Composer will prompt you to search for a package, and given results, provide a list of  matches to require.
+If you do not specify a version constraint, composer will choose a suitable one based
+on the available package versions.
+
+```shell
+php composer.phar require vendor/package vendor/package2
+```
+
+If you do not want to install the new dependencies immediately you can call it with --no-update
 
 ### Options
 
@@ -291,7 +301,7 @@ If you do not specify a package, Composer will prompt you to search for a packag
 * **--prefer-lowest:** Prefer lowest versions of dependencies. Useful for testing minimal
   versions of requirements, generally used with `--prefer-stable`. Can also be set via the
   COMPOSER_PREFER_LOWEST=1 env var.
-* **--minimal-changes:** During an update with `-w`/`-W`, only perform absolutely necessary
+* **--minimal-changes (-m):** During an update with `-w`/`-W`, only perform absolutely necessary
   changes to transitive dependencies. Can also be set via the COMPOSER_MINIMAL_CHANGES=1 env var.
 * **--sort-packages:** Keep packages sorted in `composer.json`.
 * **--optimize-autoloader (-o):** Convert PSR-0/4 autoloading to classmap to
@@ -331,7 +341,7 @@ uninstalled.
   (Deprecated, is now default behavior)
 * **--update-with-all-dependencies (-W):** Allows all inherited dependencies to be updated,
   including those that are root requirements.
-* **--minimal-changes:** During an update with `-w`/`-W`, only perform absolutely necessary
+* **--minimal-changes (-m):** During an update with `-w`/`-W`, only perform absolutely necessary
   changes to transitive dependencies. Can also be set via the COMPOSER_MINIMAL_CHANGES=1 env var.
 * **--ignore-platform-reqs:** ignore all platform requirements (`php`, `hhvm`,
   `lib-*` and `ext-*`) and force the installation even if the local machine does
@@ -552,7 +562,7 @@ php composer.phar show monolog/monolog 1.0.2
 * **--tree (-t):** List your dependencies as a tree. If you pass a package name it will show the dependency tree for that package.
 * **--latest (-l):** List all installed packages including their latest version.
 * **--outdated (-o):** Implies --latest, but this lists *only* packages that have a newer version available.
-* **--ignore:** Ignore specified package(s). Use it with the --outdated option if you don't want to be informed about new versions of some packages
+* **--ignore:** Ignore specified package(s). Can contain wildcards (`*`). Use it with the --outdated option if you don't want to be informed about new versions of some packages
 * **--no-dev:** Filters dev dependencies from the package list.
 * **--major-only (-M):** Use with --latest or --outdated. Only shows packages that have major SemVer-compatible updates.
 * **--minor-only (-m):** Use with --latest or --outdated. Only shows packages that have minor SemVer-compatible updates.
@@ -587,7 +597,7 @@ The color coding is as such:
 * **--all (-a):** Show all packages, not just outdated (alias for `composer show --latest`).
 * **--direct (-D):** Restricts the list of packages to your direct dependencies.
 * **--strict:** Returns non-zero exit code if any package is outdated.
-* **--ignore:** Ignore specified package(s). Use it if you don't want to be informed about new versions of some packages
+* **--ignore:** Ignore specified package(s). Can contain wildcards (`*`). Use it if you don't want to be informed about new versions of some packages
 * **--major-only (-M):** Only shows packages that have major SemVer-compatible updates.
 * **--minor-only (-m):** Only shows packages that have minor SemVer-compatible updates.
 * **--patch-only (-p):** Only shows packages that have patch-level SemVer-compatible updates.
@@ -1236,6 +1246,11 @@ If you are using Composer in a non-CLI context (i.e. integration into a CMS or
 similar use case), and need to support proxies, please provide the `CGI_HTTP_PROXY`
 environment variable instead. See [httpoxy.org](https://httpoxy.org/) for further
 details.
+
+### COMPOSER_AUDIT_ABANDONED
+
+Set to `ignore`, `report` or `fail` to override the [audit.abandoned](06-config.md#abandoned)
+config option.
 
 ### COMPOSER_MAX_PARALLEL_HTTP
 
