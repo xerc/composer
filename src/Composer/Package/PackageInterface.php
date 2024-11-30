@@ -23,6 +23,7 @@ use Composer\Repository\RepositoryInterface;
  *
  * @phpstan-type AutoloadRules    array{psr-0?: array<string, string|string[]>, psr-4?: array<string, string|string[]>, classmap?: list<string>, files?: list<string>, exclude-from-classmap?: list<string>}
  * @phpstan-type DevAutoloadRules array{psr-0?: array<string, string|string[]>, psr-4?: array<string, string|string[]>, classmap?: list<string>, files?: list<string>}
+ * @phpstan-type PhpExtConfig     array{extension-name?: string, priority?: int, support-zts?: bool, support-nts?: bool, build-path?: string|null, configure-options?: list<array{name: string, description?: string}>}
  */
 interface PackageInterface
 {
@@ -181,6 +182,8 @@ interface PackageInterface
     /**
      * Returns the sha1 checksum for the distribution archive of this version
      *
+     * Can be an empty string which should be treated as null
+     *
      * @return ?string
      */
     public function getDistSha1Checksum(): ?string;
@@ -320,6 +323,15 @@ interface PackageInterface
      * @return string[]
      */
     public function getIncludePaths(): array;
+
+    /**
+     * Returns the settings for php extension packages
+     *
+     * @return array|null
+     *
+     * @phpstan-return PhpExtConfig|null
+     */
+    public function getPhpExt(): ?array;
 
     /**
      * Stores a reference to the repository that owns the package

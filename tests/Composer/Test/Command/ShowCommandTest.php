@@ -36,13 +36,13 @@ class ShowCommandTest extends TestCase
                 'packages' => [
                     'type' => 'package',
                     'package' => [
-                        ['name' => 'vendor/package', 'description' => 'generic description', 'version' => '1.0.0'],
+                        ['name' => 'vendor/package', 'description' => 'generic description', 'version' => 'v1.0.0'],
 
-                        ['name' => 'outdated/major', 'description' => 'outdated/major v1.0.0 description', 'version' => '1.0.0'],
-                        ['name' => 'outdated/major', 'description' => 'outdated/major v1.0.1 description', 'version' => '1.0.1'],
-                        ['name' => 'outdated/major', 'description' => 'outdated/major v1.1.0 description', 'version' => '1.1.0'],
-                        ['name' => 'outdated/major', 'description' => 'outdated/major v1.1.1 description', 'version' => '1.1.1'],
-                        ['name' => 'outdated/major', 'description' => 'outdated/major v2.0.0 description', 'version' => '2.0.0'],
+                        ['name' => 'outdated/major', 'description' => 'outdated/major v1.0.0 description', 'version' => 'v1.0.0'],
+                        ['name' => 'outdated/major', 'description' => 'outdated/major v1.0.1 description', 'version' => 'v1.0.1'],
+                        ['name' => 'outdated/major', 'description' => 'outdated/major v1.1.0 description', 'version' => 'v1.1.0'],
+                        ['name' => 'outdated/major', 'description' => 'outdated/major v1.1.1 description', 'version' => 'v1.1.1'],
+                        ['name' => 'outdated/major', 'description' => 'outdated/major v2.0.0 description', 'version' => 'v2.0.0'],
 
                         ['name' => 'outdated/minor', 'description' => 'outdated/minor v1.0.0 description', 'version' => '1.0.0'],
                         ['name' => 'outdated/minor', 'description' => 'outdated/minor v1.0.1 description', 'version' => '1.0.1'],
@@ -57,9 +57,9 @@ class ShowCommandTest extends TestCase
             'require' => $requires === [] ? new \stdClass : $requires,
         ]);
 
-        $pkg = self::getPackage('vendor/package', '1.0.0');
+        $pkg = self::getPackage('vendor/package', 'v1.0.0');
         $pkg->setDescription('description of installed package');
-        $major = self::getPackage('outdated/major', '1.0.0');
+        $major = self::getPackage('outdated/major', 'v1.0.0');
         $major->setReleaseDate(new DateTimeImmutable());
         $minor = self::getPackage('outdated/minor', '1.0.0');
         $minor->setReleaseDate(new DateTimeImmutable('-2 years'));
@@ -299,21 +299,55 @@ Transitive dependencies not required in composer.json:
 vendor/package 1.1.0 <highlight>! 1.2.0</highlight>", trim($appTester->getDisplay(true)));
     }
 
-    public function testShowDirectWithNameOnlyShowsDirectDependents(): void
+    public function testShowDirectWithNameDoesNotShowTransientDependencies(): void
     {
         self::expectException(InvalidArgumentException::class);
         self::expectExceptionMessage('Package "vendor/package" is installed but not a direct dependent of the root package.');
 
         $this->initTempComposer([
             'repositories' => [],
+            'require' => [
+                'direct/dependent' => '*',
+            ],
         ]);
 
         $this->createInstalledJson([
+            $direct = self::getPackage('direct/dependent', '1.0.0'),
             self::getPackage('vendor/package', '1.0.0'),
         ]);
 
+        self::configureLinks($direct, ['require' => ['vendor/package' => '*']]);
+
         $appTester = $this->getApplicationTester();
         $appTester->run(['command' => 'show', '--direct' => true, 'package' => 'vendor/package']);
+    }
+
+    public function testShowDirectWithNameOnlyShowsDirectDependents(): void
+    {
+        $this->initTempComposer([
+            'repositories' => [],
+            'require' => [
+                'direct/dependent' => '*',
+            ],
+            'require-dev' => [
+                'direct/dependent2' => '*',
+            ],
+        ]);
+
+        $this->createInstalledJson([
+            self::getPackage('direct/dependent', '1.0.0'),
+            self::getPackage('direct/dependent2', '1.0.0'),
+        ]);
+
+        $appTester = $this->getApplicationTester();
+        $appTester->run(['command' => 'show', '--direct' => true, 'package' => 'direct/dependent']);
+        $appTester->assertCommandIsSuccessful();
+        self::assertStringContainsString('name     : direct/dependent' . "\n", $appTester->getDisplay(true));
+
+        $appTester = $this->getApplicationTester();
+        $appTester->run(['command' => 'show', '--direct' => true, 'package' => 'direct/dependent2']);
+        $appTester->assertCommandIsSuccessful();
+        self::assertStringContainsString('name     : direct/dependent2' . "\n", $appTester->getDisplay(true));
     }
 
     public function testShowPlatformOnlyShowsPlatformPackages(): void

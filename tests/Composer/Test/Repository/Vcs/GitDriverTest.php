@@ -72,11 +72,11 @@ GIT;
 
         $process
             ->expects([[
-                'cmd' => 'git branch --no-color',
+                'cmd' => ['git', 'branch', '--no-color'],
                 'stdout' => $stdout,
             ]], true);
 
-        $this->assertSame('main', $driver->getRootIdentifier());
+        self::assertSame('main', $driver->getRootIdentifier());
     }
 
     public function testGetRootIdentifierFromRemote(): void
@@ -102,14 +102,20 @@ GIT;
 
         $process
             ->expects([[
-                'cmd' => 'git remote -v',
+                'cmd' => ['git', 'remote', '-v'],
                 'stdout' => '',
             ], [
-                'cmd' => Platform::isWindows() ? "git remote set-url origin -- https://example.org/acme.git && git remote show origin && git remote set-url origin -- https://example.org/acme.git" : "git remote set-url origin -- 'https://example.org/acme.git' && git remote show origin && git remote set-url origin -- 'https://example.org/acme.git'",
+                'cmd' => ['git', 'remote', 'set-url', 'origin', '--', 'https://example.org/acme.git'],
+                'stdout' => '',
+            ], [
+                'cmd' => ['git', 'remote', 'show', 'origin'],
                 'stdout' => $stdout,
+            ], [
+                'cmd' => ['git', 'remote', 'set-url', 'origin', '--', 'https://example.org/acme.git'],
+                'stdout' => '',
             ]]);
 
-        $this->assertSame('main', $driver->getRootIdentifier());
+        self::assertSame('main', $driver->getRootIdentifier());
     }
 
     public function testGetRootIdentifierFromLocalWithNetworkDisabled(): void
@@ -130,11 +136,11 @@ GIT;
 
         $process
             ->expects([[
-                'cmd' => 'git branch --no-color',
+                'cmd' => ['git', 'branch', '--no-color'],
                 'stdout' => $stdout,
             ]]);
 
-        $this->assertSame('main', $driver->getRootIdentifier());
+        self::assertSame('main', $driver->getRootIdentifier());
     }
 
     public function testGetBranchesFilterInvalidBranchNames(): void
@@ -155,12 +161,12 @@ GIT;
 
         $process
             ->expects([[
-                'cmd' => 'git branch --no-color --no-abbrev -v',
+                'cmd' => ['git', 'branch', '--no-color', '--no-abbrev', '-v'],
                 'stdout' => $stdout,
             ]]);
 
         $branches = $driver->getBranches();
-        $this->assertSame([
+        self::assertSame([
             'main' => '089681446ba44d6d9004350192486f2ceb4eaa06',
             '2.2' => '12681446ba44d6d9004350192486f2ceb4eaa06',
         ], $branches);
@@ -174,7 +180,7 @@ GIT;
         $io = $this->getMockBuilder('Composer\IO\IOInterface')->getMock();
         $driver = new GitDriver(['url' => 'https://example.org/acme.git'], $io, $this->config, $this->getMockBuilder('Composer\Util\HttpDownloader')->disableOriginalConstructor()->getMock(), $process);
 
-        $this->assertNull($driver->getFileContent('file.txt', 'h'));
+        self::assertNull($driver->getFileContent('file.txt', 'h'));
 
         $driver->getFileContent('file.txt', '-h');
     }

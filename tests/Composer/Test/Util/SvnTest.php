@@ -23,25 +23,25 @@ class SvnTest extends TestCase
      * Test the credential string.
      *
      * @param string $url    The SVN url.
-     * @param string $expect The expectation for the test.
+     * @param non-empty-list<string> $expect The expectation for the test.
      *
      * @dataProvider urlProvider
      */
-    public function testCredentials(string $url, string $expect): void
+    public function testCredentials(string $url, array $expect): void
     {
         $svn = new Svn($url, new NullIO, new Config());
-        $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCredentialString');
+        $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCredentialArgs');
         $reflMethod->setAccessible(true);
 
-        $this->assertEquals($expect, $reflMethod->invoke($svn));
+        self::assertEquals($expect, $reflMethod->invoke($svn));
     }
 
     public static function urlProvider(): array
     {
         return [
-            ['http://till:test@svn.example.org/', self::getCmd(" --username 'till' --password 'test' ")],
-            ['http://svn.apache.org/', ''],
-            ['svn://johndoe@example.org', self::getCmd(" --username 'johndoe' --password '' ")],
+            ['http://till:test@svn.example.org/', ['--username', 'till', '--password', 'test']],
+            ['http://svn.apache.org/', []],
+            ['svn://johndoe@example.org', ['--username', 'johndoe', '--password', '']],
         ];
     }
 
@@ -53,9 +53,9 @@ class SvnTest extends TestCase
         $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCommand');
         $reflMethod->setAccessible(true);
 
-        $this->assertEquals(
-            self::getCmd("svn ls --non-interactive  -- 'http://svn.example.org'"),
-            $reflMethod->invokeArgs($svn, ['svn ls', $url])
+        self::assertEquals(
+            ['svn', 'ls', '--non-interactive', '--', 'http://svn.example.org'],
+            $reflMethod->invokeArgs($svn, [['svn', 'ls'], $url])
         );
     }
 
@@ -73,10 +73,10 @@ class SvnTest extends TestCase
         ]);
 
         $svn = new Svn($url, new NullIO, $config);
-        $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCredentialString');
+        $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCredentialArgs');
         $reflMethod->setAccessible(true);
 
-        $this->assertEquals(self::getCmd(" --username 'foo' --password 'bar' "), $reflMethod->invoke($svn));
+        self::assertEquals(['--username', 'foo', '--password', 'bar'], $reflMethod->invoke($svn));
     }
 
     public function testCredentialsFromConfigWithCacheCredentialsTrue(): void
@@ -96,10 +96,10 @@ class SvnTest extends TestCase
 
         $svn = new Svn($url, new NullIO, $config);
         $svn->setCacheCredentials(true);
-        $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCredentialString');
+        $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCredentialArgs');
         $reflMethod->setAccessible(true);
 
-        $this->assertEquals(self::getCmd(" --username 'foo' --password 'bar' "), $reflMethod->invoke($svn));
+        self::assertEquals(['--username', 'foo', '--password', 'bar'], $reflMethod->invoke($svn));
     }
 
     public function testCredentialsFromConfigWithCacheCredentialsFalse(): void
@@ -119,9 +119,9 @@ class SvnTest extends TestCase
 
         $svn = new Svn($url, new NullIO, $config);
         $svn->setCacheCredentials(false);
-        $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCredentialString');
+        $reflMethod = new \ReflectionMethod('Composer\\Util\\Svn', 'getCredentialArgs');
         $reflMethod->setAccessible(true);
 
-        $this->assertEquals(self::getCmd(" --no-auth-cache --username 'foo' --password 'bar' "), $reflMethod->invoke($svn));
+        self::assertEquals(['--no-auth-cache', '--username', 'foo', '--password', 'bar'], $reflMethod->invoke($svn));
     }
 }

@@ -232,8 +232,10 @@ php composer.phar update vendor/package:2.0.1 vendor/package2:3.0.*
   COMPOSER_PREFER_LOWEST=1 env var.
 * **--minimal-changes (-m):** During a partial update with `-w`/`-W`, only perform absolutely necessary
   changes to transitive dependencies. Can also be set via the COMPOSER_MINIMAL_CHANGES=1 env var.
+* **--patch-only:** Only allow patch version updates for currently installed dependencies.
 * **--interactive:** Interactive interface with autocompletion to select the packages to update.
 * **--root-reqs:** Restricts the update to your first degree dependencies.
+* **--bump-after-update:** Runs `bump` after performing the update. Set to `dev` or `no-dev` to only bump those dependencies.
 
 Specifying one of the words `mirrors`, `lock`, or `nothing` as an argument has the same effect as specifying the option `--lock`, for example `composer update mirrors` is exactly the same as `composer update --lock`.
 
@@ -313,7 +315,7 @@ If you do not want to install the new dependencies immediately you can call it w
 * **--apcu-autoloader-prefix:** Use a custom prefix for the APCu autoloader cache.
   Implicitly enables `--apcu-autoloader`.
 
-## remove / rm
+## remove / rm / uninstall
 
 The `remove` command removes packages from the `composer.json` file from
 the current directory.
@@ -727,8 +729,10 @@ packages depending on the packages that cause the conflict.
 ## validate
 
 You should always run the `validate` command before you commit your
-`composer.json` file, and before you tag a release. It will check if your
-`composer.json` is valid.
+`composer.json` file (and `composer.lock` [if applicable](01-basic-usage.md#commit-your-composer-lock-file-to-version-control)), and before you tag a release.
+
+It will check if your
+`composer.json` is valid. If a `composer.lock` exists, it will also check if it is up to date with the `composer.json`.
 
 ```shell
 php composer.phar validate
@@ -738,7 +742,9 @@ php composer.phar validate
 
 * **--no-check-all:** Do not emit a warning if requirements in `composer.json` use unbound or overly strict version constraints.
 * **--no-check-lock:** Do not emit an error if `composer.lock` exists and is not up to date.
+* **--check-lock** Check if lock file is up to date (even when [config.lock](06-config.md#lock) is false)
 * **--no-check-publish:** Do not emit an error if `composer.json` is unsuitable for publishing as a package on Packagist but is otherwise valid.
+* **--no-check-version:** Do not emit an error if the version field is present.
 * **--with-dependencies:** Also validate the composer.json of all installed dependencies.
 * **--strict:** Return a non-zero exit code for warnings as well as errors.
 
@@ -977,6 +983,7 @@ performance.
 * **--apcu:** Use APCu to cache found/not-found classes.
 * **--apcu-prefix:** Use a custom prefix for the APCu autoloader cache.
   Implicitly enables `--apcu`.
+* **--dry-run:** Outputs the operations but will not execute anything.
 * **--no-dev:** Disables autoload-dev rules. Composer will by default infer this
   automatically according to the last `install` or `update` `--no-dev` state.
 * **--dev:** Enables autoload-dev rules. Composer will by default infer this
@@ -989,6 +996,8 @@ performance.
   Multiple requirements can be ignored via wildcard.
 * **--strict-psr:** Return a failed exit code (1) if PSR-4 or PSR-0 mapping errors
   are present. Requires --optimize to work.
+* **--strict-ambiguous:** Return a failed exit code (2) if the same class is found
+  in multiple files. Requires --optimize to work.
 
 ## clear-cache / clearcache / cc
 
@@ -1060,9 +1069,10 @@ php composer.phar archive vendor/package 2.0.21 --format=zip
 ## audit
 
 This command is used to audit the packages you have installed
-for possible security issues. It checks for and
-lists security vulnerability advisories according to the
-[Packagist.org api](https://packagist.org/apidoc#list-security-advisories).
+for potential security issues. It checks for and
+lists security vulnerability advisories using the 
+[Packagist.org api](https://packagist.org/apidoc#list-security-advisories)
+by default or other repositories if specified in the `repositories` section of `composer.json`.
 
 The audit command returns the amount of vulnerabilities found. `0` if successful, and up to `255` otherwise.
 
@@ -1075,6 +1085,11 @@ php composer.phar audit
 * **--no-dev:** Disables auditing of require-dev packages.
 * **--format (-f):** Audit output format. Must be "table" (default), "plain", "json", or "summary".
 * **--locked:** Audit packages from the lock file, regardless of what is currently in vendor dir.
+* **--abandoned:** Behavior on abandoned packages. Must be "ignore", "report",
+  or "fail".  See also [audit.abandoned](06-config.md#abandoned).  Passing this
+  flag will override the config value and the environment variable.
+* **--ignore-severity:** Ignore advisories of a certain severity level. Can be passed one or more
+  time to ignore multiple severities.
 
 ## help
 
@@ -1086,8 +1101,8 @@ php composer.phar help install
 
 ## Command-line completion
 
-Command-line completion can be enabled by following instructions
-[on this page](https://github.com/bamarni/symfony-console-autocomplete).
+Command-line completion can be enabled by running the `composer completion --help` command and
+following the instructions.
 
 ## Environment variables
 
@@ -1232,20 +1247,12 @@ environment variable if you use Vagrant or VirtualBox and experience issues with
 being found during installation even though they should be present.
 
 ### http_proxy or HTTP_PROXY
+### HTTP_PROXY_REQUEST_FULLURI
+### HTTPS_PROXY_REQUEST_FULLURI
+### no_proxy or NO_PROXY
 
-If you are using Composer from behind an HTTP proxy, you can use the standard
-`http_proxy` or `HTTP_PROXY` env vars. Set it to the URL of your proxy.
-Many operating systems already set this variable for you.
-
-Using `http_proxy` (lowercased) or even defining both might be preferable since
-some tools like git or curl will only use the lower-cased `http_proxy` version.
-Alternatively you can also define the git proxy using
-`git config --global http.proxy <proxy url>`.
-
-If you are using Composer in a non-CLI context (i.e. integration into a CMS or
-similar use case), and need to support proxies, please provide the `CGI_HTTP_PROXY`
-environment variable instead. See [httpoxy.org](https://httpoxy.org/) for further
-details.
+See the [proxy documentation](faqs/how-to-use-composer-behind-a-proxy.md) for more details
+on how to use proxy env vars.
 
 ### COMPOSER_AUDIT_ABANDONED
 
@@ -1264,31 +1271,9 @@ in performance gains.
 Set to `4` or `6` to force IPv4 or IPv6 DNS resolution. This only works when the
 curl extension is used for downloads.
 
-### HTTP_PROXY_REQUEST_FULLURI
-
-If you use a proxy, but it does not support the request_fulluri flag, then you
-should set this env var to `false` or `0` to prevent Composer from setting the
-request_fulluri option.
-
-### HTTPS_PROXY_REQUEST_FULLURI
-
-If you use a proxy, but it does not support the request_fulluri flag for HTTPS
-requests, then you should set this env var to `false` or `0` to prevent Composer
-from setting the request_fulluri option.
-
 ### COMPOSER_SELF_UPDATE_TARGET
 
 If set, makes the self-update command write the new Composer phar file into that path instead of overwriting itself. Useful for updating Composer on a read-only filesystem.
-
-### no_proxy or NO_PROXY
-
-If you are behind a proxy and would like to disable it for certain domains, you
-can use the `no_proxy` or `NO_PROXY` env var. Set it to a comma separated list of
-domains the proxy should *not* be used for.
-
-The env var accepts domains, IP addresses, and IP address blocks in CIDR
-notation. You can restrict the filter to a particular port (e.g. `:80`). You
-can also set it to `*` to ignore the proxy for all HTTP requests.
 
 ### COMPOSER_DISABLE_NETWORK
 

@@ -23,6 +23,7 @@ use Composer\Util\ComposerMirror;
  *
  * @phpstan-import-type AutoloadRules from PackageInterface
  * @phpstan-import-type DevAutoloadRules from PackageInterface
+ * @phpstan-import-type PhpExtConfig from PackageInterface
  */
 class Package extends BasePackage
 {
@@ -98,6 +99,11 @@ class Package extends BasePackage
     protected $isDefaultBranch = false;
     /** @var mixed[] */
     protected $transportOptions = [];
+    /**
+     * @var array|null
+     * @phpstan-var PhpExtConfig|null
+     */
+    protected $phpExt = null;
 
     /**
      * Creates a new in memory package.
@@ -588,6 +594,26 @@ class Package extends BasePackage
     public function getIncludePaths(): array
     {
         return $this->includePaths;
+    }
+
+    /**
+     * Sets the settings for php extension packages
+     *
+     * @param array|null $phpExt
+     *
+     * @phpstan-param PhpExtConfig|null $phpExt
+     */
+    public function setPhpExt(?array $phpExt): void
+    {
+        $this->phpExt = $phpExt;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getPhpExt(): ?array
+    {
+        return $this->phpExt;
     }
 
     /**

@@ -6,9 +6,21 @@ This chapter will describe the `config` section of the `composer.json`
 ## process-timeout
 
 The timeout in seconds for process executions, defaults to 300 (5mins).
-The duration processes like git clones can run before
+The duration processes like `git clone`s can run before
 Composer assumes they died out. You may need to make this higher if you have a
 slow connection or huge vendors.
+
+Example:
+
+```json
+{
+    "config": {
+        "process-timeout": 900
+    }
+}
+```
+
+### Disabling timeouts for an individual script command
 
 To disable the process timeout on a custom command under `scripts`, a static
 helper is available:
@@ -153,7 +165,12 @@ Defaults to `report` in Composer 2.6, and defaults to `fail` from Composer 2.7 o
 }
 ```
 
-Since Composer 2.7 the option can be overriden via the [`COMPOSER_AUDIT_ABANDONED`](03-cli.md#composer-audit-abandoned) environment variable.
+Since Composer 2.7, the option can be overridden via the [`COMPOSER_AUDIT_ABANDONED`](03-cli.md#composer-audit-abandoned) environment variable.
+
+Since Composer 2.8, the option can be overridden via the
+[`--abandoned`](03-cli.md#audit) command line option, which overrides both the
+config value and the environment variable.
+
 
 ## use-parent-dir
 
@@ -475,5 +492,17 @@ Subversion/SVN transport. By default svn:// protocol is seen as insecure and wil
 throw, but you can set this config option to `["example.org"]` to allow using svn
 URLs on that hostname. This is a better/safer alternative to disabling `secure-http`
 altogether.
+
+## bump-after-update
+
+Defaults to `false` and can be any of `true`, `false`, `"dev"` or `"no-dev"`. If
+set to true, Composer will run the `bump` command after running the `update` command.
+If set to `"dev"` or `"no-dev"` then only the corresponding dependencies will be bumped.
+
+## allow-missing-requirements
+
+Defaults to `false`. Ignores error during `install` if there are any missing
+requirements - the lock file is not up to date with the latest changes in
+`composer.json`.
 
 &larr; [Repositories](05-repositories.md)  |  [Runtime](07-runtime.md) &rarr;

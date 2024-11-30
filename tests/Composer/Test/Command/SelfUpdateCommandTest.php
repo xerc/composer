@@ -12,6 +12,7 @@
 
 namespace Composer\Test\Command;
 
+use Composer\Composer;
 use Composer\Test\TestCase;
 
 /**
@@ -44,11 +45,15 @@ class SelfUpdateCommandTest extends TestCase
 
     public function testSuccessfulUpdate(): void
     {
+        if (Composer::VERSION !== '@package_version'.'@') {
+            $this->markTestSkipped('On releases this test can fail to upgrade as we are already on latest version');
+        }
+
         $appTester = $this->getApplicationTester();
         $appTester->run(['command' => 'self-update']);
 
         $appTester->assertCommandIsSuccessful();
-        $this->assertStringContainsString('Upgrading to version', $appTester->getDisplay());
+        self::assertStringContainsString('Upgrading to version', $appTester->getDisplay());
     }
 
     public function testUpdateToSpecificVersion(): void
@@ -57,7 +62,7 @@ class SelfUpdateCommandTest extends TestCase
         $appTester->run(['command' => 'self-update', 'version' => '2.4.0']);
 
         $appTester->assertCommandIsSuccessful();
-        $this->assertStringContainsString('Upgrading to version 2.4.0', $appTester->getDisplay());
+        self::assertStringContainsString('Upgrading to version 2.4.0', $appTester->getDisplay());
     }
 
     public function testUpdateWithInvalidOptionThrowsException(): void
@@ -74,12 +79,16 @@ class SelfUpdateCommandTest extends TestCase
      */
     public function testUpdateToDifferentChannel(string $option, string $expectedOutput): void
     {
+        if (Composer::VERSION !== '@package_version'.'@' && in_array($option, ['--stable', '--preview'], true)) {
+            $this->markTestSkipped('On releases this test can fail to upgrade as we are already on latest version');
+        }
+
         $appTester = $this->getApplicationTester();
         $appTester->run(['command' => 'self-update', $option => true]);
         $appTester->assertCommandIsSuccessful();
 
-        $this->assertStringContainsString('Upgrading to version', $appTester->getDisplay());
-        $this->assertStringContainsString($expectedOutput, $appTester->getDisplay());
+        self::assertStringContainsString('Upgrading to version', $appTester->getDisplay());
+        self::assertStringContainsString($expectedOutput, $appTester->getDisplay());
     }
 
     /**

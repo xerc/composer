@@ -102,6 +102,9 @@ Out of the box, Composer supports four types:
 - **composer-plugin:** A package of type `composer-plugin` may provide an
   installer for other packages that have a custom type. Read more in the
   [dedicated article](articles/custom-installers.md).
+- **php-ext** and **php-ext-zend**: These names are reserved for PHP extension
+  packages which are written in C. Do not use these types for packages written
+  in PHP.
 
 Only use a custom type if you need custom logic during installation. It is
 recommended to omit this field and have it default to `library`.
@@ -122,6 +125,11 @@ Examples:
 > **Note**: Some special keywords trigger `composer require` without the
 > `--dev` option to prompt users if they would like to add these packages to
 > `require-dev` instead of `require`. These are: `dev`, `testing`, `static analysis`.
+
+> **Note**: The range of characters allowed inside the string is restricted to
+> unicode letters or numbers, space `" "`, dot `.`, underscore `_` and dash `-`. (Regex: `'{^[\p{N}\p{L} ._-]+$}u'`)
+> Using other characters will emit a warning when running `composer validate` and
+> will cause the package to fail updating on Packagist.org.
 
 Optional.
 

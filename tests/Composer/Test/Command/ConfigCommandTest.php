@@ -32,7 +32,7 @@ class ConfigCommandTest extends TestCase
 
         $appTester->assertCommandIsSuccessful($appTester->getDisplay());
 
-        $this->assertSame($expected, json_decode((string) file_get_contents('composer.json'), true));
+        self::assertSame($expected, json_decode((string) file_get_contents('composer.json'), true));
     }
 
     public static function provideConfigUpdates(): \Generator
@@ -82,6 +82,41 @@ class ConfigCommandTest extends TestCase
             ['setting-key' => 'preferred-install.foo/*', '--unset' => true],
             ['config' => ['preferred-install' => []]],
         ];
+        yield 'unset platform' => [
+            ['config' => ['platform' => ['php' => '7.2.5'], 'platform-check' => false]],
+            ['setting-key' => 'platform.php', '--unset' => true],
+            ['config' => ['platform' => [], 'platform-check' => false]],
+        ];
+        yield 'set extra with merge' => [
+            [],
+            ['setting-key' => 'extra.patches.foo/bar', 'setting-value' => ['{"123":"value"}'], '--json' => true, '--merge' => true],
+            ['extra' => ['patches' => ['foo/bar' => [123 => 'value']]]],
+        ];
+        yield 'combine extra with merge' => [
+            ['extra' => ['patches' => ['foo/bar' => [5 => 'oldvalue']]]],
+            ['setting-key' => 'extra.patches.foo/bar', 'setting-value' => ['{"123":"value"}'], '--json' => true, '--merge' => true],
+            ['extra' => ['patches' => ['foo/bar' => [123 => 'value', 5 => 'oldvalue']]]],
+        ];
+        yield 'combine extra with list' => [
+            ['extra' => ['patches' => ['foo/bar' => ['oldvalue']]]],
+            ['setting-key' => 'extra.patches.foo/bar', 'setting-value' => ['{"123":"value"}'], '--json' => true, '--merge' => true],
+            ['extra' => ['patches' => ['foo/bar' => [123 => 'value', 0 => 'oldvalue']]]],
+        ];
+        yield 'overwrite extra with merge' => [
+            ['extra' => ['patches' => ['foo/bar' => [123 => 'oldvalue']]]],
+            ['setting-key' => 'extra.patches.foo/bar', 'setting-value' => ['{"123":"value"}'], '--json' => true, '--merge' => true],
+            ['extra' => ['patches' => ['foo/bar' => [123 => 'value']]]],
+        ];
+        yield 'unset autoload' => [
+            ['autoload' => ['psr-4' => ['test'], 'classmap' => ['test']]],
+            ['setting-key' => 'autoload.psr-4', '--unset' => true],
+            ['autoload' => ['classmap' => ['test']]],
+        ];
+        yield 'unset autoload-dev' => [
+            ['autoload-dev' => ['psr-4' => ['test'], 'classmap' => ['test']]],
+            ['setting-key' => 'autoload-dev.psr-4', '--unset' => true],
+            ['autoload-dev' => ['classmap' => ['test']]],
+        ];
     }
 
     /**
@@ -98,8 +133,8 @@ class ConfigCommandTest extends TestCase
 
         $appTester->assertCommandIsSuccessful();
 
-        $this->assertSame($expected, trim($appTester->getDisplay(true)));
-        $this->assertSame($composerJson, json_decode((string) file_get_contents('composer.json'), true), 'The composer.json should not be modified by config reads');
+        self::assertSame($expected, trim($appTester->getDisplay(true)));
+        self::assertSame($composerJson, json_decode((string) file_get_contents('composer.json'), true), 'The composer.json should not be modified by config reads');
     }
 
     public static function provideConfigReads(): \Generator
