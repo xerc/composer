@@ -595,11 +595,11 @@ EOT
             $io = new BufferIO();
             $result = $auditor->audit($io, $repoSet, $packages, Auditor::FORMAT_TABLE, true, [], Auditor::ABANDONED_IGNORE);
         } catch (\Throwable $e) {
-            return '<warning>Failed performing audit: '.$e->getMessage().'</>';
+            return '<highlight>Failed performing audit: '.$e->getMessage().'</>';
         }
 
         if ($result > 0) {
-            return '<error>Audit found some issues:</>' . PHP_EOL . $io->getOutput();
+            return '<highlight>Audit found some issues:</>' . PHP_EOL . $io->getOutput();
         }
 
         return true;
@@ -613,9 +613,12 @@ EOT
             }
 
             $version = curl_version();
+            $hasZstd = isset($version['features']) && defined('CURL_VERSION_ZSTD') && 0 !== ($version['features'] & CURL_VERSION_ZSTD);
 
             return '<comment>'.$version['version'].'</comment> '.
-                'libz <comment>'.(!empty($version['libz_version']) ? $version['libz_version'] : 'missing').'</comment> '.
+                'libz <comment>'.($version['libz_version'] ?? 'missing').'</comment> '.
+                'brotli <comment>'.($version['brotli_version'] ?? 'missing').'</comment> '.
+                'zstd <comment>'.($hasZstd ? 'supported' : 'missing').'</comment> '.
                 'ssl <comment>'.($version['ssl_version'] ?? 'missing').'</comment>';
         }
 

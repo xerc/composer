@@ -1,3 +1,37 @@
+### [2.8.6] 2025-02-25
+
+  * Added `COMPOSER_WITH_DEPENDENCIES` and `COMPOSER_WITH_ALL_DEPENDENCIES` env vars to enable the `--with[-all]-dependencies` flags (#12289)
+  * Added `COMPOSER_SKIP_SCRIPTS` env var to tell Composer to skip certain script handlers by script names (comma separated) (#12290)
+  * Added error hint when Avast is detected together with curl certificate errors (#9894)
+  * Fixed handling of backslash in folder names when creating archives (#12327)
+  * Fixed detection of containerd for containers to avoid warning about root usage (#12299)
+
+### [2.8.5] 2025-01-21
+
+  * Added build provenance attestation so you can also now download and verify phar files from GitHub releases:
+
+        gh release --repo composer/composer download --pattern composer.phar
+        gh attestation verify --repo composer/composer composer.phar
+
+  * Fixed unsupported `funding` values causing parse errors in packages (#12247)
+  * Fixed support for a few newer funding formats (#12257)
+  * Fixed InstalledVersions regression from 2.8.4 when `reload()` is used (#12269)
+  * Fixed psr-0/psr-4 rules having unstable order in `vendor/composer/autoload*.php` (#12263)
+  * Fixed a few warnings happening incorrectly in edge cases (#12284, #12268, #12283)
+
+### [2.8.4] 2024-12-11
+
+  * Fixed exit code of the `audit` command not being meaningful (now 1 for vulnerabilities and 2 for abandoned, 3 for both) (#12203)
+  * Fixed issue on plugin upgrade when it defines multiple classes (#12226)
+  * Fixed duplicate errors appearing in the output depending on php settings (#12214)
+  * Fixed InstalledVersions returning duplicate data in some instances (#12225)
+  * Fixed installed.php sorting to be deterministic (#12197)
+  * Fixed `bump-after-update` failing when using inline constraints (#12223)
+  * Fixed `create-project` command to now disable symlinking when used with a path repo as argument (#12222)
+  * Fixed `validate --no-check-publish` to hide publish errors entirely as they are irrelevant (#12196)
+  * Fixed `audit` command returning a failing code when composer audit fails as this should not trigger build failures, but running audit as standard part of your build is probably a terrible idea anyway (#12196)
+  * Fixed curl usage to disable multiplexing on broken versions when proxies are in use (#12207)
+
 ### [2.8.3] 2024-11-17
 
   * Fixed windows handling of process discovery (#12180)
@@ -1960,6 +1994,9 @@
 
   * Initial release
 
+[2.8.6]: https://github.com/composer/composer/compare/2.8.5...2.8.6
+[2.8.5]: https://github.com/composer/composer/compare/2.8.4...2.8.5
+[2.8.4]: https://github.com/composer/composer/compare/2.8.3...2.8.4
 [2.8.3]: https://github.com/composer/composer/compare/2.8.2...2.8.3
 [2.8.2]: https://github.com/composer/composer/compare/2.8.1...2.8.2
 [2.8.1]: https://github.com/composer/composer/compare/2.8.0...2.8.1

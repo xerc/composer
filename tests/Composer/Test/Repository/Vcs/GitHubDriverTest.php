@@ -237,6 +237,192 @@ class GitHubDriverTest extends TestCase
         self::assertSame('https://github.com/composer/packagist/tree/feature/3.2-foo', $data['support']['source']);
     }
 
+    /**
+     * @dataProvider fundingUrlProvider
+     * @param array<array{type: string, url: string}>|null $expected
+     */
+    public function testFundingFormat(string $funding, ?array $expected): void
+    {
+        $repoUrl = 'http://github.com/composer/packagist';
+        $repoApiUrl = 'https://api.github.com/repos/composer/packagist';
+        $identifier = 'feature/3.2-foo';
+        $sha = 'SOMESHA';
+
+        $io = $this->getMockBuilder('Composer\IO\IOInterface')->getMock();
+        $io->expects($this->any())
+            ->method('isInteractive')
+            ->will($this->returnValue(true));
+
+        $httpDownloader = $this->getHttpDownloaderMock($io, $this->config);
+        $httpDownloader->expects(
+            [
+                ['url' => $repoApiUrl, 'body' => '{"master_branch": "test_master", "owner": {"login": "composer"}, "name": "packagist"}'],
+                ['url' => 'https://api.github.com/repos/composer/packagist/contents/composer.json?ref=feature%2F3.2-foo', 'body' => '{"encoding":"base64","content":"'.base64_encode('{"support": {"source": "'.$repoUrl.'" }}').'"}'],
+                ['url' => 'https://api.github.com/repos/composer/packagist/commits/feature%2F3.2-foo', 'body' => '{"commit": {"committer":{ "date": "2012-09-10"}}}'],
+                ['url' => 'https://api.github.com/repos/composer/packagist/contents/.github/FUNDING.yml', 'body' => '{"encoding": "base64", "content": "'.base64_encode($funding).'"}'],
+            ],
+            true
+        );
+
+        $repoConfig = [
+            'url' => $repoUrl,
+        ];
+
+        $gitHubDriver = new GitHubDriver($repoConfig, $io, $this->config, $httpDownloader, $this->getProcessExecutorMock());
+        $gitHubDriver->initialize();
+        $this->setAttribute($gitHubDriver, 'tags', [$identifier => $sha]);
+        $this->setAttribute($gitHubDriver, 'branches', ['test_master' => $sha]);
+
+        $data = $gitHubDriver->getComposerInformation($identifier);
+
+        self::assertIsArray($data);
+        if ($expected === null) {
+            self::assertArrayNotHasKey('funding', $data);
+        } else {
+            self::assertSame(array_values($expected), array_values($data['funding']));
+        }
+    }
+
+    public static function fundingUrlProvider(): array
+    {
+        $allNamedPlatforms = <<<'FUNDING'
+community_bridge: project-name
+github: [userA, userB]
+issuehunt: userName
+ko_fi: userName
+liberapay: userName
+open_collective: userName
+patreon: userName
+tidelift: Platform/Package
+polar: userName
+buy_me_a_coffee: userName
+thanks_dev: u/gh/userName
+otechie: userName
+FUNDING;
+
+        return [
+            'All named platforms' => [
+                $allNamedPlatforms,
+                [
+                    [
+                        'type' => 'community_bridge',
+                        'url' => 'https://funding.communitybridge.org/projects/project-name',
+                    ],
+                    [
+                        'type' => 'github',
+                        'url' => 'https://github.com/userA',
+                    ],
+                    [
+                        'type' => 'github',
+                        'url' => 'https://github.com/userB',
+                    ],
+                    [
+                        'type' => 'issuehunt',
+                        'url' => 'https://issuehunt.io/r/userName',
+                    ],
+                    [
+                        'type' => 'ko_fi',
+                        'url' => 'https://ko-fi.com/userName',
+                    ],
+                    [
+                        'type' => 'liberapay',
+                        'url' => 'https://liberapay.com/userName',
+                    ],
+                    [
+                        'type' => 'open_collective',
+                        'url' => 'https://opencollective.com/userName',
+                    ],
+                    [
+                        'type' => 'patreon',
+                        'url' => 'https://www.patreon.com/userName',
+                    ],
+                    [
+                        'type' => 'tidelift',
+                        'url' => 'https://tidelift.com/funding/github/Platform/Package',
+                    ],
+                    [
+                        'type' => 'polar',
+                        'url' => 'https://polar.sh/userName',
+                    ],
+                    [
+                        'type' => 'buy_me_a_coffee',
+                        'url' => 'https://www.buymeacoffee.com/userName',
+                    ],
+                    [
+                        'type' => 'thanks_dev',
+                        'url' => 'https://thanks.dev/u/gh/userName',
+                    ],
+                    [
+                        'type' => 'otechie',
+                        'url' => 'https://otechie.com/userName',
+                    ],
+                ],
+            ],
+            'Custom: single schemaless URL' => [
+                'custom: example.com',
+                [
+                    [
+                        'type' => 'custom',
+                        'url' => 'https://example.com',
+                    ],
+                ],
+            ],
+            'Custom: single schemaless URL in array format' => [
+                'custom: [example.com]',
+                [
+                    [
+                        'type' => 'custom',
+                        'url' => 'https://example.com',
+                    ],
+                ],
+            ],
+            'Custom: double-quoted single URL' => [
+                'custom: "https://example.com"',
+                [
+                    [
+                        'type' => 'custom',
+                        'url' => 'https://example.com',
+                    ],
+                ],
+            ],
+            'Custom: double-quoted single URL in array format' => [
+                'custom: ["https://example.com"]',
+                [
+                    [
+                        'type' => 'custom',
+                        'url' => 'https://example.com',
+                    ],
+                ],
+            ],
+            'Custom: array with quoted URL and schemaless unquoted URL' => [
+                'custom: ["https://example.com", example.org]',
+                [
+                    [
+                        'type' => 'custom',
+                        'url' => 'https://example.com',
+                    ],
+                    [
+                        'type' => 'custom',
+                        'url' => 'https://example.org',
+                    ],
+                ],
+            ],
+            'Custom: array containing a non-simple scheme-less URL which will be discarded' => [
+                'custom: [example.net/funding, "https://example.com", example.org]',
+                [
+                    [
+                        'type' => 'custom',
+                        'url' => 'https://example.com',
+                    ],
+                    [
+                        'type' => 'custom',
+                        'url' => 'https://example.org',
+                    ],
+                ],
+            ],
+        ];
+    }
+
     public function testPublicRepositoryArchived(): void
     {
         $repoUrl = 'http://github.com/composer/packagist';
