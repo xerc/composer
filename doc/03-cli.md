@@ -230,8 +230,10 @@ php composer.phar update vendor/package:2.0.1 vendor/package2:3.0.*
 * **--prefer-lowest:** Prefer lowest versions of dependencies. Useful for testing minimal
   versions of requirements, generally used with `--prefer-stable`. Can also be set via the
   COMPOSER_PREFER_LOWEST=1 env var.
-* **--minimal-changes (-m):** During a partial update with `-w`/`-W`, only perform absolutely necessary
-  changes to transitive dependencies. Can also be set via the COMPOSER_MINIMAL_CHANGES=1 env var.
+* **--minimal-changes (-m):** Only perform absolutely necessary changes to dependencies.
+  If packages cannot be kept at their currently locked version they are updated. For partial
+  updates the allow-listed packages are always updated fully. Can also be set via
+  the COMPOSER_MINIMAL_CHANGES=1 env var.
 * **--patch-only:** Only allow patch version updates for currently installed dependencies.
 * **--interactive:** Interactive interface with autocompletion to select the packages to update.
 * **--root-reqs:** Restricts the update to your first degree dependencies.
@@ -1270,6 +1272,11 @@ Set to an integer to configure how many files can be downloaded in parallel. Thi
 defaults to 12 and must be between 1 and 50. If your proxy has issues with
 concurrency maybe you want to lower this. Increasing it should generally not result
 in performance gains.
+
+### COMPOSER_MAX_PARALLEL_PROCESSES
+
+Set to an an integer to configure how many processes can be executed in parallel.
+This defaults to 10 and must be between 1 and 50.
 
 ### COMPOSER_IPRESOLVE
 
